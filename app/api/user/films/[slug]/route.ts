@@ -22,7 +22,7 @@ interface RatingRequest {
 
 export async function POST(
 	request: NextRequest,
-	{params}: {params: {slug: string}},
+	{params}: {params: Promise<{slug: string}>},
 ) {
 	try {
 		const userId = getUserId(request);
@@ -45,7 +45,7 @@ export async function POST(
 			);
 		}
 
-		const slug = params.slug;
+		const {slug} = await params;
 
 		await connectDatabase();
 		const user = await User.findById(userId);
@@ -105,7 +105,7 @@ export async function POST(
 
 export async function GET(
 	request: NextRequest,
-	{params}: {params: {slug: string}},
+	{params}: {params: Promise<{slug: string}>},
 ) {
 	try {
 		const userId = getUserId(request);
@@ -116,7 +116,7 @@ export async function GET(
 			);
 		}
 
-		const slug = params.slug;
+		const {slug} = await params;
 
 		await connectDatabase();
 		const user = await User.findById(userId);
