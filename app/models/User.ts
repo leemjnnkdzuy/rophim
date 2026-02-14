@@ -1,4 +1,4 @@
-import mongoose, {Document, Model, Schema} from "mongoose";
+import mongoose, { Document, Model, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 
 export interface IWatchHistoryItem {
@@ -26,6 +26,7 @@ export interface IUser extends Document {
 		ratedAt: Date;
 	}>;
 	isVerified: boolean;
+	showSavedFilms: boolean;
 	createdAt: Date;
 	updatedAt: Date;
 	comparePassword(candidatePassword: string): Promise<boolean>;
@@ -121,6 +122,10 @@ const userSchema = new Schema<IUser>(
 			},
 		],
 		isVerified: {
+			type: Boolean,
+			default: true,
+		},
+		showSavedFilms: {
 			type: Boolean,
 			default: true,
 		},

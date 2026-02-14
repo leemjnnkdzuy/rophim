@@ -72,6 +72,13 @@ const routes: RouteConfig[] = [
 		isDynamic: false,
 	},
 	{
+		path: "/profile/:identifier",
+		component: ProfilePage,
+		layout: NothingLayout,
+		isPrivate: false,
+		isDynamic: true,
+	},
+	{
 		path: "/change-username",
 		component: ChangeUsernamePage,
 		layout: NothingLayout,

@@ -1,10 +1,9 @@
-import mongoose, {Document, Model, Schema, Types} from "mongoose";
+import mongoose, { Document, Model, Schema, Types } from "mongoose";
 
 export interface IComment extends Document {
 	filmSlug: string;
 	userId: Types.ObjectId;
 	username: string;
-	userAvatar?: string;
 	content: string;
 	parentId: Types.ObjectId | null;
 	likes: string[]; // array of userIds
@@ -30,10 +29,6 @@ const commentSchema = new Schema<IComment>(
 		username: {
 			type: String,
 			required: true,
-		},
-		userAvatar: {
-			type: String,
-			default: "",
 		},
 		content: {
 			type: String,
@@ -70,9 +65,9 @@ const commentSchema = new Schema<IComment>(
 );
 
 // Compound index for efficient queries
-commentSchema.index({filmSlug: 1, createdAt: -1});
-commentSchema.index({filmSlug: 1, isPinned: -1, createdAt: -1});
-commentSchema.index({parentId: 1, createdAt: 1});
+commentSchema.index({ filmSlug: 1, createdAt: -1 });
+commentSchema.index({ filmSlug: 1, isPinned: -1, createdAt: -1 });
+commentSchema.index({ parentId: 1, createdAt: 1 });
 
 if (mongoose.models.Comment) {
 	delete mongoose.models.Comment;

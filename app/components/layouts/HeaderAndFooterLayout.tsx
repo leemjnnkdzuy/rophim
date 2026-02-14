@@ -185,7 +185,7 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 										className='relative rounded-lg'
 									/>
 								</div>
-								<span className='text-xl font-bold text-white'>
+								<span className='text-3xl font-alfa text-white mt-1.5'>
 									RapPhim
 								</span>
 							</button>
@@ -514,7 +514,7 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 									height={40}
 									className='rounded-lg'
 								/>
-								<span className='text-xl font-bold text-white'>
+								<span className='text-3xl font-alfa text-white mt-1.5'>
 									RapPhim
 								</span>
 							</div>

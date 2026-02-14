@@ -1,14 +1,43 @@
-import {NextRequest, NextResponse} from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import connectDatabase from "@/app/utils/connectDB";
 import User from "@/app/models/User";
 import Comment from "@/app/models/Comment";
-import {verifyAccessToken} from "@/app/utils/jwt";
+import { verifyAccessToken } from "@/app/utils/jwt";
 
 function getUserId(request: NextRequest): string | null {
 	const accessToken = request.cookies.get("access_token")?.value;
 	if (!accessToken) return null;
 	const payload = verifyAccessToken(accessToken);
 	return payload?.userId || null;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function enrichCommentsWithAvatar(comments: any[]) {
+	if (comments.length === 0) return comments;
+
+	// Collect unique userIds
+	const userIds = [...new Set(comments.map((c) => c.userId?.toString()).filter(Boolean))];
+
+	// Batch query users
+	const users = await User.find({ _id: { $in: userIds } })
+		.select("_id avatar")
+		.lean();
+
+	// Build a map of userId -> avatar data URI
+	const avatarMap = new Map<string, string>();
+	for (const u of users) {
+		const avatar =
+			u.avatar?.data
+				? `data:${u.avatar.mime};base64,${u.avatar.data}`
+				: "";
+		avatarMap.set(u._id.toString(), avatar);
+	}
+
+	// Enrich comments
+	return comments.map((c) => ({
+		...c,
+		userAvatar: avatarMap.get(c.userId?.toString()) || "",
+	}));
 }
 
 // GET: Fetch comments for a film
@@ -22,8 +51,8 @@ export async function GET(request: NextRequest) {
 
 		if (!filmSlug) {
 			return NextResponse.json(
-				{success: false, message: "Thiếu filmSlug"},
-				{status: 400},
+				{ success: false, message: "Thiếu filmSlug" },
+				{ status: 400 },
 			);
 		}
 
@@ -37,7 +66,7 @@ export async function GET(request: NextRequest) {
 				parentId,
 				isDeleted: false,
 			})
-				.sort({createdAt: 1})
+				.sort({ createdAt: 1 })
 				.skip(skip)
 				.limit(limit)
 				.lean();
@@ -47,9 +76,12 @@ export async function GET(request: NextRequest) {
 				isDeleted: false,
 			});
 
+			// Populate current avatars
+			const enrichedReplies = await enrichCommentsWithAvatar(replies);
+
 			return NextResponse.json({
 				success: true,
-				comments: replies,
+				comments: enrichedReplies,
 				total: totalReplies,
 				page,
 				hasMore: skip + replies.length < totalReplies,
@@ -62,7 +94,7 @@ export async function GET(request: NextRequest) {
 			parentId: null,
 			isDeleted: false,
 		})
-			.sort({isPinned: -1, createdAt: -1})
+			.sort({ isPinned: -1, createdAt: -1 })
 			.skip(skip)
 			.limit(limit)
 			.lean();
@@ -78,14 +110,14 @@ export async function GET(request: NextRequest) {
 		const replyCounts = await Comment.aggregate([
 			{
 				$match: {
-					parentId: {$in: commentIds},
+					parentId: { $in: commentIds },
 					isDeleted: false,
 				},
 			},
 			{
 				$group: {
 					_id: "$parentId",
-					count: {$sum: 1},
+					count: { $sum: 1 },
 				},
 			},
 		]);
@@ -94,10 +126,13 @@ export async function GET(request: NextRequest) {
 			replyCounts.map((r) => [r._id.toString(), r.count]),
 		);
 
-		const enrichedComments = comments.map((c) => ({
+		const commentsWithReplyCount = comments.map((c) => ({
 			...c,
 			replyCount: replyCountMap.get(c._id.toString()) || 0,
 		}));
+
+		// Populate current avatars
+		const enrichedComments = await enrichCommentsWithAvatar(commentsWithReplyCount);
 
 		return NextResponse.json({
 			success: true,
@@ -109,8 +144,8 @@ export async function GET(request: NextRequest) {
 	} catch (error) {
 		console.error("Get comments error:", error);
 		return NextResponse.json(
-			{success: false, message: "Lỗi server"},
-			{status: 500},
+			{ success: false, message: "Lỗi server" },
+			{ status: 500 },
 		);
 	}
 }
@@ -121,18 +156,18 @@ export async function POST(request: NextRequest) {
 		const userId = getUserId(request);
 		if (!userId) {
 			return NextResponse.json(
-				{success: false, message: "Chưa đăng nhập"},
-				{status: 401},
+				{ success: false, message: "Chưa đăng nhập" },
+				{ status: 401 },
 			);
 		}
 
 		const body = await request.json();
-		const {filmSlug, content, parentId} = body;
+		const { filmSlug, content, parentId } = body;
 
 		if (!filmSlug || !content?.trim()) {
 			return NextResponse.json(
-				{success: false, message: "Thiếu thông tin bình luận"},
-				{status: 400},
+				{ success: false, message: "Thiếu thông tin bình luận" },
+				{ status: 400 },
 			);
 		}
 
@@ -142,7 +177,7 @@ export async function POST(request: NextRequest) {
 					success: false,
 					message: "Bình luận không được quá 1000 ký tự",
 				},
-				{status: 400},
+				{ status: 400 },
 			);
 		}
 
@@ -151,8 +186,8 @@ export async function POST(request: NextRequest) {
 		const user = await User.findById(userId).select("username avatar");
 		if (!user) {
 			return NextResponse.json(
-				{success: false, message: "Không tìm thấy người dùng"},
-				{status: 404},
+				{ success: false, message: "Không tìm thấy người dùng" },
+				{ status: 404 },
 			);
 		}
 
@@ -161,8 +196,8 @@ export async function POST(request: NextRequest) {
 			const parentComment = await Comment.findById(parentId);
 			if (!parentComment || parentComment.isDeleted) {
 				return NextResponse.json(
-					{success: false, message: "Bình luận gốc không tồn tại"},
-					{status: 404},
+					{ success: false, message: "Bình luận gốc không tồn tại" },
+					{ status: 404 },
 				);
 			}
 			// Don't allow nested replies (only 1 level deep)
@@ -172,37 +207,38 @@ export async function POST(request: NextRequest) {
 						success: false,
 						message: "Không thể trả lời bình luận cấp 2",
 					},
-					{status: 400},
+					{ status: 400 },
 				);
 			}
 		}
-
-		const userAvatar =
-			user.avatar?.data ?
-				`data:${user.avatar.mime};base64,${user.avatar.data}`
-			:	"";
 
 		const comment = await Comment.create({
 			filmSlug: filmSlug.trim(),
 			userId,
 			username: user.username,
-			userAvatar,
 			content: content.trim(),
 			parentId: parentId || null,
 		});
+
+		// Return with current avatar (not stored in DB)
+		const userAvatar =
+			user.avatar?.data ?
+				`data:${user.avatar.mime};base64,${user.avatar.data}`
+				: "";
 
 		return NextResponse.json({
 			success: true,
 			comment: {
 				...comment.toObject(),
+				userAvatar,
 				replyCount: 0,
 			},
 		});
 	} catch (error) {
 		console.error("Create comment error:", error);
 		return NextResponse.json(
-			{success: false, message: "Lỗi server"},
-			{status: 500},
+			{ success: false, message: "Lỗi server" },
+			{ status: 500 },
 		);
 	}
 }
@@ -213,18 +249,18 @@ export async function PATCH(request: NextRequest) {
 		const userId = getUserId(request);
 		if (!userId) {
 			return NextResponse.json(
-				{success: false, message: "Chưa đăng nhập"},
-				{status: 401},
+				{ success: false, message: "Chưa đăng nhập" },
+				{ status: 401 },
 			);
 		}
 
 		const body = await request.json();
-		const {commentId, action} = body;
+		const { commentId, action } = body;
 
 		if (!commentId || !action) {
 			return NextResponse.json(
-				{success: false, message: "Thiếu thông tin"},
-				{status: 400},
+				{ success: false, message: "Thiếu thông tin" },
+				{ status: 400 },
 			);
 		}
 
@@ -233,8 +269,8 @@ export async function PATCH(request: NextRequest) {
 		const comment = await Comment.findById(commentId);
 		if (!comment || comment.isDeleted) {
 			return NextResponse.json(
-				{success: false, message: "Bình luận không tồn tại"},
-				{status: 404},
+				{ success: false, message: "Bình luận không tồn tại" },
+				{ status: 404 },
 			);
 		}
 
@@ -243,8 +279,8 @@ export async function PATCH(request: NextRequest) {
 			const alreadyLiked = (comment.likes || []).includes(userId);
 			const update =
 				alreadyLiked ?
-					{$pull: {likes: userId}}
-				:	{$addToSet: {likes: userId}};
+					{ $pull: { likes: userId } }
+					: { $addToSet: { likes: userId } };
 
 			const updated = await Comment.findByIdAndUpdate(commentId, update, {
 				new: true,
@@ -266,7 +302,7 @@ export async function PATCH(request: NextRequest) {
 						success: false,
 						message: "Chỉ admin mới có thể ghim bình luận",
 					},
-					{status: 403},
+					{ status: 403 },
 				);
 			}
 
@@ -277,7 +313,7 @@ export async function PATCH(request: NextRequest) {
 						success: false,
 						message: "Không thể ghim bình luận trả lời",
 					},
-					{status: 400},
+					{ status: 400 },
 				);
 			}
 
@@ -294,14 +330,14 @@ export async function PATCH(request: NextRequest) {
 		}
 
 		return NextResponse.json(
-			{success: false, message: "Hành động không hợp lệ"},
-			{status: 400},
+			{ success: false, message: "Hành động không hợp lệ" },
+			{ status: 400 },
 		);
 	} catch (error) {
 		console.error("Update comment error:", error);
 		return NextResponse.json(
-			{success: false, message: "Lỗi server"},
-			{status: 500},
+			{ success: false, message: "Lỗi server" },
+			{ status: 500 },
 		);
 	}
 }
@@ -312,8 +348,8 @@ export async function DELETE(request: NextRequest) {
 		const userId = getUserId(request);
 		if (!userId) {
 			return NextResponse.json(
-				{success: false, message: "Chưa đăng nhập"},
-				{status: 401},
+				{ success: false, message: "Chưa đăng nhập" },
+				{ status: 401 },
 			);
 		}
 
@@ -322,8 +358,8 @@ export async function DELETE(request: NextRequest) {
 
 		if (!commentId) {
 			return NextResponse.json(
-				{success: false, message: "Thiếu commentId"},
-				{status: 400},
+				{ success: false, message: "Thiếu commentId" },
+				{ status: 400 },
 			);
 		}
 
@@ -332,8 +368,8 @@ export async function DELETE(request: NextRequest) {
 		const comment = await Comment.findById(commentId);
 		if (!comment || comment.isDeleted) {
 			return NextResponse.json(
-				{success: false, message: "Bình luận không tồn tại"},
-				{status: 404},
+				{ success: false, message: "Bình luận không tồn tại" },
+				{ status: 404 },
 			);
 		}
 
@@ -348,7 +384,7 @@ export async function DELETE(request: NextRequest) {
 					success: false,
 					message: "Bạn không có quyền xóa bình luận này",
 				},
-				{status: 403},
+				{ status: 403 },
 			);
 		}
 
@@ -385,8 +421,8 @@ export async function DELETE(request: NextRequest) {
 	} catch (error) {
 		console.error("Delete comment error:", error);
 		return NextResponse.json(
-			{success: false, message: "Lỗi server"},
-			{status: 500},
+			{ success: false, message: "Lỗi server" },
+			{ status: 500 },
 		);
 	}
 }

@@ -75,7 +75,8 @@ export async function GET() {
             enrichedCartoonMovies,
             enrichedChinaMovies,
             enrichedKoreaMovies,
-            enrichedWesternMovies
+            enrichedWesternMovies,
+            enrichedSingleMovies
         ] = await Promise.all([
             enrichWithEpisode(latestMovies),
             enrichWithEpisode(trendingMovies),
@@ -83,7 +84,8 @@ export async function GET() {
             enrichWithEpisode(cartoonMovies),
             enrichWithEpisode(chinaMovies),
             enrichWithEpisode(koreaMovies),
-            enrichWithEpisode(westernMovies)
+            enrichWithEpisode(westernMovies),
+            enrichWithEpisode(singleMovies)
         ]);
 
         const films = {
@@ -93,7 +95,7 @@ export async function GET() {
             koreaMovies: enrichedKoreaMovies,
             westernMovies: enrichedWesternMovies,
             seriesMovies: enrichedSeriesMovies,
-            singleMovies,
+            singleMovies: enrichedSingleMovies,
             cartoonMovies: enrichedCartoonMovies,
         };
 
