@@ -3,6 +3,7 @@
 import React, {useState, useEffect} from "react";
 import Link from "next/link";
 import Image from "next/image";
+import {icon} from "@/app/assets";
 import {Input} from "@/app/components/ui/input";
 import {Button} from "@/app/components/ui/button";
 import {Badge} from "@/app/components/ui/badge";
@@ -192,13 +193,17 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 								className='flex items-center gap-2 shrink-0 group'
 							>
 								<div className='relative'>
-									<div className='absolute -inset-1 bg-[#8ae4ff] rounded-lg blur opacity-40 group-hover:opacity-70 transition-opacity' />
-									<div className='relative bg-[#8ae4ff] text-black font-black text-xl px-2.5 py-1 rounded-lg'>
-										R
-									</div>
+									<div className='absolute -inset-1 rounded-lg blur opacity-40 group-hover:opacity-70 transition-opacity' />
+									<Image
+										src={icon}
+										alt='RapPhim Logo'
+										width={40}
+										height={40}
+										className='relative rounded-lg'
+									/>
 								</div>
 								<span className='text-xl font-bold text-white'>
-									RoPhim
+									RapPhim
 								</span>
 							</Link>
 
@@ -371,11 +376,15 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 										{/* Mobile Header */}
 										<div className='p-5 border-b border-white/5'>
 											<div className='flex items-center gap-2'>
-												<div className='bg-[#8ae4ff] text-black font-black text-lg px-2 py-0.5 rounded-lg'>
-													R
-												</div>
+												<Image
+													src={icon}
+													alt='RapPhim Logo'
+													width={32}
+													height={32}
+													className='rounded-lg'
+												/>
 												<span className='text-lg font-bold text-white'>
-													RoPhim
+													RapPhim
 												</span>
 											</div>
 										</div>

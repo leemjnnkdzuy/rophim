@@ -35,6 +35,7 @@ import {
 import api from "@/app/utils/axios";
 import {useAuth} from "@/app/hooks/useAuth";
 import {useGlobalNotificationPopup} from "@/app/hooks/useGlobalNotificationPopup";
+import RatingPopup from "@/app/components/common/RatingPopup";
 
 // ─── Skeleton ──────────────────────────────────────────────
 function WatchPageSkeleton() {
@@ -114,6 +115,8 @@ export default function WatchPage({
 	const [viewIncremented, setViewIncremented] = useState(false);
 	const [isSaved, setIsSaved] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
+	const [showRatingPopup, setShowRatingPopup] = useState(false);
+	const [userRating, setUserRating] = useState<number | null>(null);
 	const playerRef = useRef<HTMLDivElement>(null);
 
 	const slug = identifier || "";
@@ -174,6 +177,27 @@ export default function WatchPage({
 			setViewIncremented(true);
 		}
 	}, [film, viewIncremented]);
+
+	const loadUserRating = useCallback(async () => {
+		if (!slug || !isAuthenticated) return;
+		try {
+			const response = await api.get(`/user/films/${slug}/rating`);
+			if (response.data?.success) {
+				setUserRating(response.data.userRating);
+			}
+		} catch {
+			// Silently fail
+		}
+	}, [slug, isAuthenticated]);
+
+	useEffect(() => {
+		loadUserRating();
+	}, [loadUserRating]);
+
+	const handleRatingSubmit = (rating: number) => {
+		setUserRating(rating);
+		setShowRatingPopup(false);
+	};
 
 	// Find current episode
 	const activeServer: EpisodeServer | null =
@@ -338,6 +362,7 @@ export default function WatchPage({
 
 						<div className='flex items-center gap-2'>
 							<Button
+								onClick={() => setShowRatingPopup(true)}
 								size='sm'
 								className='bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-full shadow-lg shadow-amber-500/20 h-9 px-3 cursor-pointer transition-all'
 							>
@@ -589,6 +614,16 @@ export default function WatchPage({
 					</div>
 				</div>
 			</div>
+
+			{/* Rating Popup */}
+			{showRatingPopup && (
+				<RatingPopup
+					filmSlug={slug}
+					currentRating={userRating || undefined}
+					onClose={() => setShowRatingPopup(false)}
+					onRatingSubmit={handleRatingSubmit}
+				/>
+			)}
 		</div>
 	);
 }

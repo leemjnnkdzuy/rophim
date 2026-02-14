@@ -32,12 +32,14 @@ import {MovieCard} from "@/app/components/common/MovieCard";
 import {HeroCategorySection} from "@/app/components/common/HeroCategorySection";
 import {SplitCategorySection} from "@/app/components/common/SplitCategorySection";
 import {SingleMovieSection} from "@/app/components/common/SingleMovieSection";
+import {LoadingScreen} from "@/app/components/common/LoadingScreen";
 
 // --- Main Page ---
 
 export default function HomePage() {
 	const router = useRouter();
 	const [currentSlide, setCurrentSlide] = useState(0);
+	const [isLoading, setIsLoading] = useState(true);
 	const [featuredMoviesData, setFeaturedMoviesData] = useState<
 		FeaturedMovie[]
 	>([]);
@@ -199,12 +201,14 @@ export default function HomePage() {
 						cartoon,
 						genres,
 					});
+					setIsLoading(false);
 				}
 			} catch (error) {
 				console.error(
 					"Failed to load new movies for hero section",
 					error,
 				);
+				setIsLoading(false);
 			}
 		};
 		loadMovies();
@@ -219,6 +223,10 @@ export default function HomePage() {
 	}, [featuredMoviesData.length]);
 
 	const featuredMovie = featuredMoviesData[currentSlide];
+
+	if (isLoading) {
+		return <LoadingScreen />;
+	}
 
 	if (!featuredMovie) return null;
 

@@ -488,27 +488,6 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 									>
 										<Share2 className='h-5 w-5' />
 									</Button>
-									<Button
-										onClick={() => setShowRatingPopup(true)}
-										size='icon'
-										className={`rounded-full h-11 w-11 cursor-pointer backdrop-blur-sm transition-all ${
-											userRating ?
-												"bg-cyan-400/20 border border-cyan-400/40 text-cyan-400 hover:bg-cyan-400/30"
-											:	"border border-white/15 text-gray-300 hover:bg-white/10 hover:text-white"
-										}`}
-										variant={
-											userRating ? "default" : "outline"
-										}
-									>
-										<Star
-											className='h-5 w-5'
-											fill={
-												userRating ? "currentColor" : (
-													"none"
-												)
-											}
-										/>
-									</Button>
 								</div>
 							</div>
 
@@ -543,8 +522,9 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 						người có thể biết phim hay hay dở đó nhá!&quot;
 					</p>
 					<Button
+						onClick={() => setShowRatingPopup(true)}
 						size='sm'
-						className='bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-full shadow-lg shadow-amber-500/20'
+						className='bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-full shadow-lg shadow-amber-500/20 cursor-pointer'
 					>
 						<Star className='h-4 w-4 mr-1 fill-black' />
 						Đánh giá phim
