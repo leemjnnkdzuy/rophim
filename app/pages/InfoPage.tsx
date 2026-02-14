@@ -35,7 +35,6 @@ import type {CategoryGroup} from "@/app/services/movieService";
 import api from "@/app/utils/axios";
 import {useAuth} from "@/app/hooks/useAuth";
 import {useGlobalNotificationPopup} from "@/app/hooks/useGlobalNotificationPopup";
-import {useMetadata} from "@/app/hooks/useMetadata";
 import {usePageMetadata} from "@/app/hooks/usePageMetadata";
 import RatingPopup from "@/app/components/common/RatingPopup";
 
@@ -159,8 +158,6 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 		serverIdx: number;
 	} | null>(null);
 
-	const metadata = useMetadata(film);
-
 	const slug = identifier || "";
 
 	const loadFilm = useCallback(async () => {
@@ -191,11 +188,7 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 		loadFilm();
 	}, [loadFilm]);
 
-	usePageMetadata({
-		title: metadata.title,
-		description: metadata.description,
-		ogImage: film?.poster_url,
-	});
+	usePageMetadata(film ? `${film.name} - RapPhim` : null);
 
 	useEffect(() => {
 		const loadSavedStatus = async () => {
@@ -520,20 +513,9 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 										fill='black'
 									/>
 									{lastWatchedEp ?
-										"Tiếp tục xem"
+										`Tiếp tục xem tập ${lastWatchedEp.episodeName || lastWatchedEp.episodeSlug}`
 									:	"Xem Ngay"}
 								</Button>
-								{lastWatchedEp && (
-									<span className='text-xs text-primary/70 font-medium hidden sm:inline-flex items-center gap-1 self-center'>
-										<Play
-											className='h-3 w-3'
-											fill='currentColor'
-										/>
-										Đang xem:{" "}
-										{lastWatchedEp.episodeName ||
-											lastWatchedEp.episodeSlug}
-									</span>
-								)}
 
 								<div className='flex items-center gap-2'>
 									{isSaved ?

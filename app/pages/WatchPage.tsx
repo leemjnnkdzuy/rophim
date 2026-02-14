@@ -35,7 +35,6 @@ import {
 import api from "@/app/utils/axios";
 import {useAuth} from "@/app/hooks/useAuth";
 import {useGlobalNotificationPopup} from "@/app/hooks/useGlobalNotificationPopup";
-import {useMetadata} from "@/app/hooks/useMetadata";
 import {usePageMetadata} from "@/app/hooks/usePageMetadata";
 import RatingPopup from "@/app/components/common/RatingPopup";
 
@@ -121,8 +120,6 @@ export default function WatchPage({
 	const [userRating, setUserRating] = useState<number | null>(null);
 	const playerRef = useRef<HTMLDivElement>(null);
 
-	const metadata = useMetadata(film);
-
 	const slug = identifier || "";
 
 	const loadFilm = useCallback(async () => {
@@ -156,11 +153,7 @@ export default function WatchPage({
 		loadFilm();
 	}, [loadFilm]);
 
-	usePageMetadata({
-		title: metadata.title,
-		description: metadata.description,
-		ogImage: film?.poster_url,
-	});
+	usePageMetadata(film ? `Xem ${film.name} - RapPhim` : null);
 
 	useEffect(() => {
 		const loadSavedStatus = async () => {
