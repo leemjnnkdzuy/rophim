@@ -1,10 +1,9 @@
-import {NextRequest, NextResponse} from "next/server";
-import {generatePIN, sendPasswordResetEmail} from "@/app/utils/sendMail";
+import { NextRequest, NextResponse } from "next/server";
+import { generatePIN, sendPasswordResetEmail } from "@/app/utils/sendMail";
 import connectDatabase from "@/app/utils/connectDB";
 import User from "@/app/models/User";
-import bcrypt from "bcryptjs";
 
-const resetPinStore = new Map<string, {pin: string; expiresAt: number}>();
+const resetPinStore = new Map<string, { pin: string; expiresAt: number; verified?: boolean }>();
 
 function cleanupExpiredPins() {
 	const now = Date.now();
@@ -18,28 +17,28 @@ function cleanupExpiredPins() {
 export async function POST(request: NextRequest) {
 	try {
 		const body = await request.json();
-		const {action, email, pin, newPassword} = body;
+		const { action, email, pin, newPassword } = body;
 
 		cleanupExpiredPins();
 
 		if (action === "send-pin") {
 			if (!email) {
 				return NextResponse.json(
-					{success: false, error: "Vui lòng nhập email"},
-					{status: 400},
+					{ success: false, error: "Vui lòng nhập email" },
+					{ status: 400 },
 				);
 			}
 
 			await connectDatabase();
 
-			const user = await User.findOne({email: email.toLowerCase()});
+			const user = await User.findOne({ email: email.toLowerCase() });
 			if (!user) {
 				return NextResponse.json(
 					{
 						success: false,
 						error: "Không tìm thấy tài khoản với email này",
 					},
-					{status: 400},
+					{ status: 400 },
 				);
 			}
 
@@ -49,6 +48,7 @@ export async function POST(request: NextRequest) {
 			resetPinStore.set(email.toLowerCase(), {
 				pin: newPin,
 				expiresAt,
+				verified: false,
 			});
 
 			const result = await sendPasswordResetEmail(email, newPin);
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 						success: false,
 						error: "Không thể gửi email. Vui lòng thử lại.",
 					},
-					{status: 500},
+					{ status: 500 },
 				);
 			}
 		}
@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
 		if (action === "verify-pin") {
 			if (!email || !pin) {
 				return NextResponse.json(
-					{success: false, error: "Thiếu email hoặc mã PIN"},
-					{status: 400},
+					{ success: false, error: "Thiếu email hoặc mã PIN" },
+					{ status: 400 },
 				);
 			}
 
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 						success: false,
 						error: "Mã PIN đã hết hạn. Vui lòng yêu cầu mã mới.",
 					},
-					{status: 400},
+					{ status: 400 },
 				);
 			}
 
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 						success: false,
 						error: "Mã PIN đã hết hạn. Vui lòng yêu cầu mã mới.",
 					},
-					{status: 400},
+					{ status: 400 },
 				);
 			}
 
@@ -106,13 +106,14 @@ export async function POST(request: NextRequest) {
 						success: false,
 						error: "Mã PIN không đúng. Vui lòng thử lại.",
 					},
-					{status: 400},
+					{ status: 400 },
 				);
 			}
 
 			resetPinStore.set(email.toLowerCase(), {
 				...storedData,
 				expiresAt: Date.now() + 5 * 60 * 1000,
+				verified: true,
 			});
 
 			return NextResponse.json({
@@ -124,15 +125,15 @@ export async function POST(request: NextRequest) {
 		if (action === "reset-password") {
 			if (!email || !newPassword) {
 				return NextResponse.json(
-					{success: false, error: "Thiếu email hoặc mật khẩu mới"},
-					{status: 400},
+					{ success: false, error: "Thiếu email hoặc mật khẩu mới" },
+					{ status: 400 },
 				);
 			}
 
 			if (newPassword.length < 6) {
 				return NextResponse.json(
-					{success: false, error: "Mật khẩu phải có ít nhất 6 ký tự"},
-					{status: 400},
+					{ success: false, error: "Mật khẩu phải có ít nhất 6 ký tự" },
+					{ status: 400 },
 				);
 			}
 
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
 						success: false,
 						error: "Phiên đã hết hạn. Vui lòng bắt đầu lại.",
 					},
-					{status: 400},
+					{ status: 400 },
 				);
 			}
 
@@ -155,24 +156,32 @@ export async function POST(request: NextRequest) {
 						success: false,
 						error: "Phiên đã hết hạn. Vui lòng bắt đầu lại.",
 					},
-					{status: 400},
+					{ status: 400 },
+				);
+			}
+
+			if (!storedData.verified) {
+				return NextResponse.json(
+					{
+						success: false,
+						error: "Vui lòng xác thực mã PIN trước khi đặt lại mật khẩu.",
+					},
+					{ status: 400 },
 				);
 			}
 
 			await connectDatabase();
 
-			const user = await User.findOne({email: email.toLowerCase()});
+			const user = await User.findOne({ email: email.toLowerCase() });
 			if (!user) {
 				return NextResponse.json(
-					{success: false, error: "Không tìm thấy tài khoản"},
-					{status: 404},
+					{ success: false, error: "Không tìm thấy tài khoản" },
+					{ status: 404 },
 				);
 			}
 
-			const salt = await bcrypt.genSalt(12);
-			const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-			user.password = hashedPassword;
+			// Don't manually hash here, userSchema.pre('save') handles it!
+			user.password = newPassword;
 			await user.save();
 
 			resetPinStore.delete(email.toLowerCase());
@@ -184,14 +193,14 @@ export async function POST(request: NextRequest) {
 		}
 
 		return NextResponse.json(
-			{success: false, error: "Hành động không hợp lệ"},
-			{status: 400},
+			{ success: false, error: "Hành động không hợp lệ" },
+			{ status: 400 },
 		);
 	} catch (error) {
 		console.error("Reset password error:", error);
 		return NextResponse.json(
-			{success: false, error: "Lỗi server. Vui lòng thử lại sau."},
-			{status: 500},
+			{ success: false, error: "Lỗi server. Vui lòng thử lại sau." },
+			{ status: 500 },
 		);
 	}
 }
