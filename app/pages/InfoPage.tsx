@@ -35,6 +35,7 @@ import type {CategoryGroup} from "@/app/services/movieService";
 import api from "@/app/utils/axios";
 import {useAuth} from "@/app/hooks/useAuth";
 import {useGlobalNotificationPopup} from "@/app/hooks/useGlobalNotificationPopup";
+import {useMetadata} from "@/app/hooks/useMetadata";
 import RatingPopup from "@/app/components/common/RatingPopup";
 
 function getCategories(category: Record<string, CategoryGroup>) {
@@ -152,6 +153,8 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 	const [showRatingPopup, setShowRatingPopup] = useState(false);
 	const [userRating, setUserRating] = useState<number | null>(null);
 
+	const metadata = useMetadata(film);
+
 	const slug = identifier || "";
 
 	const loadFilm = useCallback(async () => {
@@ -181,6 +184,12 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 		setIsDescExpanded(false);
 		loadFilm();
 	}, [loadFilm]);
+
+	useEffect(() => {
+		if (metadata.title) {
+			document.title = metadata.title;
+		}
+	}, [metadata.title]);
 
 	useEffect(() => {
 		const loadSavedStatus = async () => {

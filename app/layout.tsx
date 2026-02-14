@@ -17,6 +17,9 @@ export const metadata: Metadata = {
 	title: "RoPhim - Xem Phim Online Miễn Phí",
 	description:
 		"Xem phim online chất lượng cao, phim lẻ, phim bộ, phim chiếu rạp mới nhất hoàn toàn miễn phí.",
+	icons: {
+		icon: "/assets/icon.png",
+	},
 };
 
 export default function RootLayout({
