@@ -12,7 +12,7 @@ interface RatingPopupProps {
 	filmSlug?: string;
 	filmId?: string;
 	onClose?: () => void;
-	onRatingSubmit?: (rating: number) => void;
+	onRatingSubmit?: (rating: number, filmAverage?: number | null) => void;
 	currentRating?: number;
 	averageRating?: number;
 }
@@ -61,20 +61,21 @@ const RatingPopup: React.FC<RatingPopupProps> = ({
 		setIsLoading(true);
 		try {
 			const slug = filmSlug || filmId;
-			const response = await fetch(`/api/user/films/${slug}/rating`, {
+			const response = await fetch(`/api/user/films/${slug}`, {
 				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
+				headers: {"Content-Type": "application/json"},
 				body: JSON.stringify({rating}),
 			});
 
+			const result = await response.json();
+
 			if (!response.ok) {
-				throw new Error("Failed to submit rating");
+				console.error("Rating API error:", result);
+				throw new Error(result?.message || "Failed to submit rating");
 			}
 
 			showNotification("Đánh giá phim thành công!", "success");
-			onRatingSubmit?.(rating);
+			onRatingSubmit?.(rating, result?.filmRating ?? null);
 			onClose?.();
 		} catch (error) {
 			showNotification(

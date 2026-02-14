@@ -82,6 +82,47 @@ export async function POST(
 
 		await user.save();
 
+		// Recalculate average rating for the film from all users
+		let aggregated: {avg?: number; count?: number} | null = null;
+		try {
+			const agg = await User.aggregate([
+				{$match: {"ratings.filmSlug": slug}},
+				{$unwind: "$ratings"},
+				{$match: {"ratings.filmSlug": slug}},
+				{
+					$group: {
+						_id: "$ratings.filmSlug",
+						avg: {$avg: "$ratings.score"},
+						count: {$sum: 1},
+					},
+				},
+			]);
+			if (agg && agg.length > 0) {
+				aggregated = {avg: agg[0].avg, count: agg[0].count};
+			}
+		} catch (aggErr) {
+			console.warn(
+				"Failed to aggregate user ratings:",
+				aggErr instanceof Error ? aggErr.message : String(aggErr),
+			);
+		}
+
+		// Update Film document's rating (if film exists locally)
+		let updatedFilmRating: number | null = null;
+		try {
+			const Film = (await import("@/app/models/Film")).default;
+			if (aggregated && typeof aggregated.avg === "number") {
+				const rounded = Math.round(aggregated.avg * 10) / 10; // one decimal
+				await Film.findOneAndUpdate({slug}, {rating: rounded});
+				updatedFilmRating = rounded;
+			}
+		} catch (filmErr) {
+			console.warn(
+				"Failed to update Film.rating:",
+				filmErr instanceof Error ? filmErr.message : String(filmErr),
+			);
+		}
+
 		return NextResponse.json(
 			{
 				success: true,
@@ -91,6 +132,11 @@ export async function POST(
 					score: rating,
 					ratedAt: new Date(),
 				},
+				filmRating:
+					updatedFilmRating ??
+					(aggregated?.avg ?
+						Math.round(aggregated.avg * 10) / 10
+					:	null),
 			},
 			{status: 200},
 		);

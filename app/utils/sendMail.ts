@@ -33,7 +33,7 @@ export function getVerificationEmailTemplate(
 					<tr>
 						<td style="padding: 40px 40px 24px; text-align: center;">
 							<h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #1a1a1a;">
-								Rophim
+								RapPhim
 							</h1>
 						</td>
 					</tr>
@@ -45,7 +45,7 @@ export function getVerificationEmailTemplate(
 								Xin chào <strong>${userName}</strong>,
 							</p>
 							<p style="margin: 0 0 24px; font-size: 14px; color: #666666; line-height: 1.6;">
-								Cảm ơn bạn đã đăng ký tài khoản tại Rophim. Vui lòng sử dụng mã PIN bên dưới để xác thực tài khoản của bạn:
+								Cảm ơn bạn đã đăng ký tài khoản tại RapPhim. Vui lòng sử dụng mã PIN bên dưới để xác thực tài khoản của bạn:
 							</p>
 						</td>
 					</tr>
@@ -78,7 +78,7 @@ export function getVerificationEmailTemplate(
 					<tr>
 						<td style="padding: 24px 40px; background-color: #fafafa; border-radius: 0 0 16px 16px; border-top: 1px solid #eeeeee;">
 							<p style="margin: 0; font-size: 12px; color: #999999; text-align: center;">
-								© 2026 Rophim. All rights reserved.
+							© 2026 RapPhim. All rights reserved.
 							</p>
 						</td>
 					</tr>
@@ -98,9 +98,9 @@ export async function sendVerificationEmail(
 ): Promise<{success: boolean; error?: string}> {
 	try {
 		await transporter.sendMail({
-			from: `"Rophim" <${process.env.SMTP_USER}>`,
+			from: `"RapPhim" <${process.env.SMTP_USER}>`,
 			to: email,
-			subject: "Xác thực tài khoản - Rophim",
+			subject: "Xác thực tài khoản - RapPhim",
 			html: getVerificationEmailTemplate(pin, userName),
 		});
 		return {success: true};
@@ -135,7 +135,7 @@ export function getPasswordResetEmailTemplate(
 					<tr>
 						<td style="padding: 40px 40px 24px; text-align: center;">
 							<h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #1a1a1a;">
-								Rophim
+								RapPhim
 							</h1>
 						</td>
 					</tr>
@@ -180,7 +180,7 @@ export function getPasswordResetEmailTemplate(
 					<tr>
 						<td style="padding: 24px 40px; background-color: #fafafa; border-radius: 0 0 16px 16px; border-top: 1px solid #eeeeee;">
 							<p style="margin: 0; font-size: 12px; color: #999999; text-align: center;">
-								© 2026 Rophim. All rights reserved.
+							© 2026 RapPhim. All rights reserved.
 							</p>
 						</td>
 					</tr>
@@ -199,9 +199,9 @@ export async function sendPasswordResetEmail(
 ): Promise<{success: boolean; error?: string}> {
 	try {
 		await transporter.sendMail({
-			from: `"Rophim" <${process.env.SMTP_USER}>`,
+			from: `"RapPhim" <${process.env.SMTP_USER}>`,
 			to: email,
-			subject: "Đặt lại mật khẩu - Rophim",
+			subject: "Đặt lại mật khẩu - RapPhim",
 			html: getPasswordResetEmailTemplate(pin, email),
 		});
 		return {success: true};

@@ -39,7 +39,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
 	const [loading, setLoading] = useState(true);
 
 	const fetchUser = useCallback(async () => {
-		const hasAuth = localStorage.getItem("rophim_auth_status");
+		const hasAuth = localStorage.getItem("rapphim_auth_status");
 		if (!hasAuth) {
 			setLoading(false);
 			return;
@@ -50,7 +50,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
 			setUser(res.data.user);
 		} catch {
 			setUser(null);
-			localStorage.removeItem("rophim_auth_status");
+			localStorage.removeItem("rapphim_auth_status");
 		} finally {
 			setLoading(false);
 		}
@@ -65,7 +65,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
 					rememberMe,
 				});
 				setUser(res.data.user);
-				localStorage.setItem("rophim_auth_status", "true");
+				localStorage.setItem("rapphim_auth_status", "true");
 				return {success: true};
 			} catch (error: unknown) {
 				const axiosError = error as {
@@ -87,7 +87,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
 			await api.post("/auth/logout");
 		} finally {
 			setUser(null);
-			localStorage.removeItem("rophim_auth_status");
+			localStorage.removeItem("rapphim_auth_status");
 		}
 	}, []);
 

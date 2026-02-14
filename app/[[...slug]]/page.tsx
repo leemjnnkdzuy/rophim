@@ -1,4 +1,5 @@
 import {notFound} from "next/navigation";
+import type {Metadata} from "next";
 
 import FooterLayout from "@/app/components/layouts/FooterLayout";
 import NothingLayout from "@/app/components/layouts/NothingLayout";
@@ -16,6 +17,7 @@ import ChangeEmailPage from "@/app/pages/ChangeEmailPage";
 import InfoPage from "@/app/pages/InfoPage";
 import WatchPage from "@/app/pages/WatchPage";
 import SavedPage from "@/app/pages/SavedPage";
+import {fetchFilmDetail} from "@/app/services/movieService";
 
 interface RouteConfig {
 	path: string;
@@ -130,6 +132,101 @@ function matchRoute(
 	}
 
 	return {matched: true, params};
+}
+
+export async function generateMetadata({params}: PageProps): Promise<Metadata> {
+	try {
+		const {slug} = await params;
+		const path = slug ? "/" + slug.join("/") : "/";
+
+		// Check if this is an info or watch route
+		if (path.startsWith("/info/")) {
+			const identifier = path.replace("/info/", "");
+			const film = await fetchFilmDetail(identifier);
+			return {
+				title: `${film.name} - RapPhim`,
+				description:
+					film.description ||
+					"Xem phim online chất lượng cao, phim lẻ, phim bộ, phim chiếu rạp mới nhất hoàn toàn miễn phí.",
+				openGraph: {
+					title: `${film.name} - RapPhim`,
+					description:
+						film.description ||
+						"Xem phim online chất lượng cao, phim lẻ, phim bộ, phim chiếu rạp mới nhất hoàn toàn miễn phí.",
+					images: [
+						{
+							url: film.poster_url,
+							width: 500,
+							height: 750,
+							alt: film.name,
+						},
+					],
+					type: "website",
+				},
+				twitter: {
+					card: "summary_large_image",
+					title: `${film.name} - RapPhim`,
+					description:
+						film.description?.substring(0, 160) ||
+						"Xem phim online chất lượng cao",
+					images: [film.poster_url],
+				},
+			};
+		} else if (path.startsWith("/xem/")) {
+			const parts = path.split("/").filter(Boolean);
+			const identifier = parts[1];
+			const film = await fetchFilmDetail(identifier);
+			return {
+				title: `Xem ${film.name} - RapPhim`,
+				description:
+					film.description ||
+					"Xem phim online chất lượng cao, phim lẻ, phim bộ, phim chiếu rạp mới nhất hoàn toàn miễn phí.",
+				openGraph: {
+					title: `Xem ${film.name} - RapPhim`,
+					description:
+						film.description ||
+						"Xem phim online chất lượng cao, phim lẻ, phim bộ, phim chiếu rạp mới nhất hoàn toàn miễn phí.",
+					images: [
+						{
+							url: film.poster_url,
+							width: 500,
+							height: 750,
+							alt: film.name,
+						},
+					],
+					type: "website",
+				},
+				twitter: {
+					card: "summary_large_image",
+					title: `Xem ${film.name} - RapPhim`,
+					description:
+						film.description?.substring(0, 160) ||
+						"Xem phim online chất lượng cao",
+					images: [film.poster_url],
+				},
+			};
+		}
+
+		// Default metadata for non-dynamic routes
+		return {
+			title: "RapPhim - Xem Phim Online Miễn Phí",
+			description:
+				"Xem phim online chất lượng cao, phim lẻ, phim bộ, phim chiếu rạp mới nhất hoàn toàn miễn phí.",
+		};
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : String(error);
+		console.error(
+			"[generateMetadata] Error fetching film detail:",
+			errorMessage,
+			"\nFalling back to default metadata",
+		);
+		return {
+			title: "RapPhim - Xem Phim Online Miễn Phí",
+			description:
+				"Xem phim online chất lượng cao, phim lẻ, phim bộ, phim chiếu rạp mới nhất hoàn toàn miễn phí.",
+		};
+	}
 }
 
 export default async function DynamicPage({params}: PageProps) {

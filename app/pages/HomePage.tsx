@@ -575,7 +575,7 @@ export default function HomePage() {
 									R
 								</div>
 								<span className='text-xl font-bold text-white'>
-									RoPhim
+									RapPhim
 								</span>
 							</div>
 							<p className='text-sm text-gray-500 leading-relaxed'>
@@ -657,7 +657,7 @@ export default function HomePage() {
 					{/* Bottom */}
 					<div className='mt-10 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4'>
 						<p className='text-xs text-gray-600'>
-							© 2025 RoPhim. Tất cả quyền được bảo lưu.
+							© 2025 RapPhim. Tất cả quyền được bảo lưu.
 						</p>
 						<div className='flex items-center gap-3 text-xs text-gray-600'>
 							<span>Được xây dựng với ❤️</span>

@@ -14,7 +14,7 @@ interface MetadataResult {
 	description: string;
 }
 
-const DEFAULT_TITLE = "RoPhim - Xem Phim Online Miễn Phí";
+const DEFAULT_TITLE = "RapPhim - Xem Phim Online Miễn Phí";
 const DEFAULT_DESCRIPTION =
 	"Xem phim online chất lượng cao, phim lẻ, phim bộ, phim chiếu rạp mới nhất hoàn toàn miễn phí.";
 
@@ -28,7 +28,7 @@ export function useMetadata(movie?: MovieMetadata | null): MetadataResult {
 		}
 
 		// Tạo title tùy chỉnh
-		const customTitle = `${movie.title}${movie.year ? ` (${movie.year})` : ""} - RoPhim`;
+		const customTitle = `${movie.title}${movie.year ? ` (${movie.year})` : ""} - RapPhim`;
 
 		// Tạo description tùy chỉnh
 		let customDescription = `Xem ${movie.title}`;
@@ -45,7 +45,7 @@ export function useMetadata(movie?: MovieMetadata | null): MetadataResult {
 			customDescription += ` - Đánh giá: ${movie.rating}/10`;
 		}
 
-		customDescription += " - Xem online miễn phí tại RoPhim";
+		customDescription += " - Xem online miễn phí tại RapPhim";
 
 		return {
 			title: customTitle,

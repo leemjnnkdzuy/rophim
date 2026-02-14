@@ -36,6 +36,7 @@ import api from "@/app/utils/axios";
 import {useAuth} from "@/app/hooks/useAuth";
 import {useGlobalNotificationPopup} from "@/app/hooks/useGlobalNotificationPopup";
 import {useMetadata} from "@/app/hooks/useMetadata";
+import {usePageMetadata} from "@/app/hooks/usePageMetadata";
 import RatingPopup from "@/app/components/common/RatingPopup";
 
 function getCategories(category: Record<string, CategoryGroup>) {
@@ -185,11 +186,11 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 		loadFilm();
 	}, [loadFilm]);
 
-	useEffect(() => {
-		if (metadata.title) {
-			document.title = metadata.title;
-		}
-	}, [metadata.title]);
+	usePageMetadata({
+		title: metadata.title,
+		description: metadata.description,
+		ogImage: film?.poster_url,
+	});
 
 	useEffect(() => {
 		const loadSavedStatus = async () => {
@@ -241,7 +242,7 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 	const loadUserRating = useCallback(async () => {
 		if (!slug || !isAuthenticated) return;
 		try {
-			const response = await api.get(`/user/films/${slug}/rating`);
+			const response = await api.get(`/user/films/${slug}`);
 			if (response.data?.success) {
 				setUserRating(response.data.userRating);
 			}
@@ -254,8 +255,14 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 		loadUserRating();
 	}, [loadUserRating]);
 
-	const handleRatingSubmit = (rating: number) => {
+	const handleRatingSubmit = (
+		rating: number,
+		filmAverage?: number | null,
+	) => {
 		setUserRating(rating);
+		if (typeof filmAverage === "number" && film) {
+			setFilm({...film, rating: filmAverage});
+		}
 		setShowRatingPopup(false);
 	};
 
@@ -755,6 +762,7 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 				<RatingPopup
 					filmSlug={slug}
 					currentRating={userRating || undefined}
+					averageRating={film?.rating}
 					onClose={() => setShowRatingPopup(false)}
 					onRatingSubmit={handleRatingSubmit}
 				/>
