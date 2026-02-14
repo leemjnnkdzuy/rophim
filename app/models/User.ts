@@ -1,6 +1,14 @@
 import mongoose, {Document, Model, Schema} from "mongoose";
 import bcrypt from "bcryptjs";
 
+export interface IWatchHistoryItem {
+	filmSlug: string;
+	episodeSlug: string;
+	episodeName: string;
+	serverIdx: number;
+	watchedAt: Date;
+}
+
 export interface IUser extends Document {
 	username: string;
 	email: string;
@@ -10,6 +18,7 @@ export interface IUser extends Document {
 		data: string;
 	};
 	savedFilms: string[];
+	watchHistory: IWatchHistoryItem[];
 	ratings?: Array<{
 		filmSlug: string;
 		score: number;
@@ -63,6 +72,30 @@ const userSchema = new Schema<IUser>(
 			type: [String],
 			default: [],
 		},
+		watchHistory: [
+			{
+				filmSlug: {
+					type: String,
+					required: true,
+				},
+				episodeSlug: {
+					type: String,
+					required: true,
+				},
+				episodeName: {
+					type: String,
+					default: "",
+				},
+				serverIdx: {
+					type: Number,
+					default: 0,
+				},
+				watchedAt: {
+					type: Date,
+					default: Date.now,
+				},
+			},
+		],
 		ratings: [
 			{
 				filmSlug: {

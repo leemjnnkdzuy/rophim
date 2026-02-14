@@ -153,6 +153,11 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 	const [isSaving, setIsSaving] = useState(false);
 	const [showRatingPopup, setShowRatingPopup] = useState(false);
 	const [userRating, setUserRating] = useState<number | null>(null);
+	const [lastWatchedEp, setLastWatchedEp] = useState<{
+		episodeSlug: string;
+		episodeName: string;
+		serverIdx: number;
+	} | null>(null);
 
 	const metadata = useMetadata(film);
 
@@ -208,6 +213,32 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 		};
 
 		loadSavedStatus();
+	}, [slug, isAuthenticated]);
+
+	// Load last watched episode from history
+	useEffect(() => {
+		const loadWatchHistory = async () => {
+			if (!slug || !isAuthenticated) {
+				setLastWatchedEp(null);
+				return;
+			}
+			try {
+				const response = await api.get(`/user/history?slug=${slug}`);
+				if (response.data?.found && response.data.lastWatched) {
+					setLastWatchedEp({
+						episodeSlug: response.data.lastWatched.episodeSlug,
+						episodeName: response.data.lastWatched.episodeName,
+						serverIdx: response.data.lastWatched.serverIdx,
+					});
+				} else {
+					setLastWatchedEp(null);
+				}
+			} catch {
+				setLastWatchedEp(null);
+			}
+		};
+
+		loadWatchHistory();
 	}, [slug, isAuthenticated]);
 
 	const handleToggleSave = async () => {
@@ -319,6 +350,8 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 						fill
 						sizes='100vw'
 						unoptimized
+						loading='eager'
+						priority
 						className='object-cover object-top'
 					/>
 					<div className='absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent' />
@@ -450,22 +483,32 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 									onClick={() => {
 										if (film) {
 											incrementView(film.slug);
-											// Navigate to the first episode
-											const firstEp =
-												film.episodes?.[0]?.items?.[0];
-											if (firstEp) {
+											// Navigate to last watched episode if available, otherwise first episode
+											if (lastWatchedEp) {
 												router.push(
-													`/xem/${film.slug}/${firstEp.slug}`,
+													`/xem/${film.slug}/${lastWatchedEp.episodeSlug}`,
 												);
 											} else {
-												const episodeSection =
-													document.getElementById(
-														"episode-list",
+												const firstEp =
+													film.episodes?.[0]
+														?.items?.[0];
+												if (firstEp) {
+													router.push(
+														`/xem/${film.slug}/${firstEp.slug}`,
 													);
-												if (episodeSection) {
-													episodeSection.scrollIntoView(
-														{behavior: "smooth"},
-													);
+												} else {
+													const episodeSection =
+														document.getElementById(
+															"episode-list",
+														);
+													if (episodeSection) {
+														episodeSection.scrollIntoView(
+															{
+																behavior:
+																	"smooth",
+															},
+														);
+													}
 												}
 											}
 										}
@@ -476,8 +519,21 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 										className='h-5 w-5 mr-2'
 										fill='black'
 									/>
-									Xem Ngay
+									{lastWatchedEp ?
+										"Tiếp tục xem"
+									:	"Xem Ngay"}
 								</Button>
+								{lastWatchedEp && (
+									<span className='text-xs text-primary/70 font-medium hidden sm:inline-flex items-center gap-1 self-center'>
+										<Play
+											className='h-3 w-3'
+											fill='currentColor'
+										/>
+										Đang xem:{" "}
+										{lastWatchedEp.episodeName ||
+											lastWatchedEp.episodeSlug}
+									</span>
+								)}
 
 								<div className='flex items-center gap-2'>
 									{isSaved ?
@@ -729,22 +785,38 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 						{/* Episode Grid */}
 						{activeServer && activeServer.items.length > 0 ?
 							<div className='grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 xl:grid-cols-10 gap-2'>
-								{activeServer.items.map((ep) => (
-									<button
-										key={ep.slug}
-										onClick={() =>
-											router.push(
-												`/xem/${film.slug}/${ep.slug}`,
-											)
-										}
-										className='relative h-11 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-300 font-medium hover:bg-primary/20 hover:border-primary/40 hover:text-primary transition-all duration-200 cursor-pointer group'
-									>
-										<span className='relative z-10'>
-											{ep.name}
-										</span>
-										<div className='absolute inset-0 bg-primary/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200' />
-									</button>
-								))}
+								{activeServer.items.map((ep) => {
+									const isLastWatched =
+										lastWatchedEp?.episodeSlug === ep.slug;
+									return (
+										<button
+											key={ep.slug}
+											onClick={() =>
+												router.push(
+													`/xem/${film.slug}/${ep.slug}`,
+												)
+											}
+											className={`relative h-11 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer group ${
+												isLastWatched ?
+													"bg-primary/20 border border-primary/40 text-primary ring-1 ring-primary/30"
+												:	"bg-white/5 border border-white/10 text-gray-300 hover:bg-primary/20 hover:border-primary/40 hover:text-primary"
+											}`}
+										>
+											<span className='relative z-10 flex items-center justify-center gap-1'>
+												{isLastWatched && (
+													<Play
+														className='h-3 w-3'
+														fill='currentColor'
+													/>
+												)}
+												{ep.name}
+											</span>
+											{!isLastWatched && (
+												<div className='absolute inset-0 bg-primary/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200' />
+											)}
+										</button>
+									);
+								})}
 							</div>
 						:	<div className='flex flex-col items-center justify-center py-20 gap-3 bg-white/[0.02] rounded-2xl border border-white/5'>
 								<Film className='h-12 w-12 text-white/10' />

@@ -188,6 +188,31 @@ export default function WatchPage({
 		}
 	}, [film, viewIncremented]);
 
+	// Track watch history when episode changes
+	useEffect(() => {
+		const trackWatchHistory = async () => {
+			if (!film || !activeEpSlug || !isAuthenticated) return;
+
+			// Find the current episode name
+			const server = film.episodes?.[activeServerIdx];
+			const ep = server?.items?.find((e) => e.slug === activeEpSlug);
+			if (!ep) return;
+
+			try {
+				await api.post("/user/history", {
+					filmSlug: film.slug,
+					episodeSlug: ep.slug,
+					episodeName: ep.name,
+					serverIdx: activeServerIdx,
+				});
+			} catch {
+				// Silently fail - don't interrupt viewing experience
+			}
+		};
+
+		trackWatchHistory();
+	}, [film, activeEpSlug, activeServerIdx, isAuthenticated]);
+
 	const loadUserRating = useCallback(async () => {
 		if (!slug || !isAuthenticated) return;
 		try {

@@ -3,6 +3,7 @@
 import React, {useState, useEffect} from "react";
 import Link from "next/link";
 import Image from "next/image";
+import {useRouter} from "next/navigation";
 import {icon} from "@/app/assets";
 import {Input} from "@/app/components/ui/input";
 import {Button} from "@/app/components/ui/button";
@@ -29,10 +30,8 @@ import {
 	LogOut,
 	Film,
 	Tv,
-	Globe,
 	Users,
 	Calendar,
-	Sparkles,
 	Flame,
 } from "lucide-react";
 import api from "@/app/utils/axios";
@@ -71,21 +70,6 @@ const countries = [
 	"Pháp",
 	"Đức",
 	"Việt Nam",
-];
-
-const topics = [
-	"Xuyên Không",
-	"Ngôn Tình",
-	"Đam Mỹ",
-	"Bách Hợp",
-	"Trọng Sinh",
-	"Chuyển Giới",
-	"Tu Tiên",
-	"Isekai",
-	"Học Đường",
-	"Công Sở",
-	"Y Khoa",
-	"Trinh Thám",
 ];
 
 // --- Sub Components ---
@@ -157,10 +141,26 @@ function NavLink({href, label, icon, badge}: NavLinkProps) {
 // --- Main Layout ---
 
 export default function HeaderLayout({children}: {children: React.ReactNode}) {
+	const router = useRouter();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isSearchFocused, setIsSearchFocused] = useState(false);
 	const [genres, setGenres] = useState<string[]>(DEFAULT_GENRES);
 	const {isAuthenticated, user, logout} = useAuth();
+
+	// Handle search
+	const handleSearch = () => {
+		if (searchQuery.trim()) {
+			router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+		}
+	};
+
+	// Handle search on Enter key
+	const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			handleSearch();
+		}
+	};
 
 	useEffect(() => {
 		const fetchGenres = async () => {
@@ -209,36 +209,17 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 
 							{/* Desktop Nav */}
 							<nav className='hidden xl:flex items-center gap-1'>
-								<NavDropdown
-									label='Chủ Đề'
-									items={topics}
-									icon={<Sparkles className='h-3.5 w-3.5' />}
-								/>
-								<NavDropdown
-									label='Thể Loại'
-									items={genres}
-									icon={<Film className='h-3.5 w-3.5' />}
-								/>
-								<NavLink
-									href='/phim-le'
-									label='Phim Lẻ'
-									icon={<Film className='h-3.5 w-3.5' />}
-								/>
-								<NavLink
-									href='/phim-bo'
-									label='Phim Bộ'
-									icon={<Tv className='h-3.5 w-3.5' />}
-								/>
+								<NavDropdown label='Thể Loại' items={genres} />
+								<NavLink href='/phim-le' label='Phim Lẻ' />
+								<NavLink href='/phim-bo' label='Phim Bộ' />
 								<NavLink
 									href='/xem-chung'
 									label='Xem Chung'
 									badge='NEW'
-									icon={<Users className='h-3.5 w-3.5' />}
 								/>
 								<NavDropdown
 									label='Quốc Gia'
 									items={countries}
-									icon={<Globe className='h-3.5 w-3.5' />}
 								/>
 							</nav>
 
@@ -257,10 +238,18 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 										onChange={(e) =>
 											setSearchQuery(e.target.value)
 										}
+										onKeyDown={handleSearchKeyDown}
 										onFocus={() => setIsSearchFocused(true)}
 										onBlur={() => setIsSearchFocused(false)}
-										className='w-full pl-10 pr-4 h-9 bg-white/5 border-white/10 rounded-full text-sm text-white placeholder:text-gray-500 focus-visible:ring-[#8ae4ff]/30 hover:bg-white/8 transition-colors'
+										className='w-full pl-10 pr-20 h-9 bg-white/5 border-white/10 rounded-full text-sm text-white placeholder:text-gray-500 focus-visible:ring-[#8ae4ff]/30 hover:bg-white/8 transition-colors'
 									/>
+									<Button
+										onClick={handleSearch}
+										disabled={!searchQuery.trim()}
+										className='absolute right-1 top-1/2 -translate-y-1/2 h-7 px-4 bg-[#8ae4ff] hover:bg-[#8ae4ff]/90 text-black rounded-full font-semibold text-xs shadow-lg shadow-[#8ae4ff]/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed'
+									>
+										Tìm
+									</Button>
 								</div>
 							</div>
 						</div>
@@ -271,6 +260,7 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 							<Button
 								variant='ghost'
 								size='icon'
+								onClick={() => router.push("/search")}
 								className='md:hidden text-gray-400 hover:text-white hover:bg-white/10 rounded-full'
 							>
 								<Search className='h-5 w-5' />
@@ -394,6 +384,15 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 											<div className='relative'>
 												<Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500' />
 												<Input
+													value={searchQuery}
+													onChange={(e) =>
+														setSearchQuery(
+															e.target.value,
+														)
+													}
+													onKeyDown={
+														handleSearchKeyDown
+													}
 													placeholder='Tìm kiếm phim...'
 													className='pl-9 bg-white/5 border-white/10 rounded-full text-sm'
 												/>
@@ -409,10 +408,6 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 													icon={
 														<Flame className='h-4 w-4' />
 													}
-												/>
-												<MobileNavSection
-													title='Chủ Đề'
-													items={topics}
 												/>
 												<MobileNavSection
 													title='Thể Loại'

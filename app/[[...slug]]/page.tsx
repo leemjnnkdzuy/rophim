@@ -17,6 +17,8 @@ import ChangeEmailPage from "@/app/pages/ChangeEmailPage";
 import InfoPage from "@/app/pages/InfoPage";
 import WatchPage from "@/app/pages/WatchPage";
 import SavedPage from "@/app/pages/SavedPage";
+import SearchPage from "@/app/pages/SearchPage";
+import WatchHistoryPage from "@/app/pages/WatchHistoryPage";
 import {fetchFilmDetail} from "@/app/services/movieService";
 
 interface RouteConfig {
@@ -86,6 +88,20 @@ const routes: RouteConfig[] = [
 		component: SavedPage,
 		layout: HeaderLayout,
 		isPrivate: true,
+		isDynamic: false,
+	},
+	{
+		path: "/history",
+		component: WatchHistoryPage,
+		layout: HeaderLayout,
+		isPrivate: true,
+		isDynamic: false,
+	},
+	{
+		path: "/search",
+		component: SearchPage,
+		layout: HeaderLayout,
+		isPrivate: false,
 		isDynamic: false,
 	},
 	{

@@ -247,7 +247,7 @@ export default function HomePage() {
 							fill
 							sizes='100vw'
 							unoptimized
-							className='object-cover blur-sm'
+							className='object-cover'
 						/>
 						<div className='absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/50 to-transparent' />
 					</div>
