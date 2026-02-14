@@ -1,7 +1,7 @@
 import {notFound} from "next/navigation";
 import type {Metadata} from "next";
 
-import FooterLayout from "@/app/components/layouts/FooterLayout";
+import HeaderAndFooterLayout from "@/app/components/layouts/HeaderAndFooterLayout";
 import NothingLayout from "@/app/components/layouts/NothingLayout";
 import HeaderLayout from "../components/layouts/HeaderLayout";
 
@@ -37,7 +37,7 @@ const routes: RouteConfig[] = [
 	{
 		path: "/",
 		component: HomePage,
-		layout: HeaderLayout,
+		layout: HeaderAndFooterLayout,
 		isPrivate: false,
 		isDynamic: false,
 	},
