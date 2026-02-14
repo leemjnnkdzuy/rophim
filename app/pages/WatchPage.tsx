@@ -1,11 +1,11 @@
 "use client";
 
-import React, {useState, useEffect, useMemo, useCallback, useRef} from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Image from "next/image";
-import {useRouter} from "next/navigation";
-import {Button} from "@/app/components/ui/button";
-import {Badge} from "@/app/components/ui/badge";
-import {Tabs, TabsList, TabsTrigger} from "@/app/components/ui/tabs";
+import { useRouter } from "next/navigation";
+import { Button } from "@/app/components/ui/button";
+import { Badge } from "@/app/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import {
 	Play,
 	Star,
@@ -34,9 +34,9 @@ import {
 	incrementView,
 } from "@/app/services/movieService";
 import api from "@/app/utils/axios";
-import {useAuth} from "@/app/hooks/useAuth";
-import {useGlobalNotificationPopup} from "@/app/hooks/useGlobalNotificationPopup";
-import {usePageMetadata} from "@/app/hooks/usePageMetadata";
+import { useAuth } from "@/app/hooks/useAuth";
+import { useGlobalNotificationPopup } from "@/app/hooks/useGlobalNotificationPopup";
+import { usePageMetadata } from "@/app/hooks/usePageMetadata";
 import RatingPopup from "@/app/components/common/RatingPopup";
 
 // ─── Skeleton ──────────────────────────────────────────────
@@ -57,7 +57,7 @@ function WatchPageSkeleton() {
 					<div className='h-7 w-24 bg-neutral-800 rounded-md' />
 				</div>
 				<div className='grid grid-cols-6 md:grid-cols-10 lg:grid-cols-12 gap-2 mt-6'>
-					{Array.from({length: 24}).map((_, i) => (
+					{Array.from({ length: 24 }).map((_, i) => (
 						<div
 							key={i}
 							className='h-11 bg-neutral-800 rounded-lg'
@@ -106,8 +106,8 @@ export default function WatchPage({
 	episodeSlug?: string;
 }) {
 	const router = useRouter();
-	const {isAuthenticated} = useAuth();
-	const {showNotification} = useGlobalNotificationPopup();
+	const { isAuthenticated } = useAuth();
+	const { showNotification } = useGlobalNotificationPopup();
 	const [film, setFilm] = useState<FilmDetail | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -135,7 +135,6 @@ export default function WatchPage({
 			const data = await fetchFilmDetail(slug);
 			setFilm(data);
 
-			// Auto-select first episode if no episode slug is provided
 			if (!episodeSlug && data.episodes?.[0]?.items?.[0]) {
 				setActiveEpSlug(data.episodes[0].items[0].slug);
 			}
@@ -143,7 +142,7 @@ export default function WatchPage({
 			const errorMessage =
 				err instanceof Error ?
 					err.message
-				:	"Có lỗi xảy ra khi tải thông tin phim.";
+					: "Có lỗi xảy ra khi tải thông tin phim.";
 			setError(errorMessage);
 		} finally {
 			setLoading(false);
@@ -229,7 +228,7 @@ export default function WatchPage({
 	) => {
 		setUserRating(rating);
 		if (typeof filmAverage === "number" && film) {
-			setFilm({...film, rating: filmAverage});
+			setFilm({ ...film, rating: filmAverage });
 		}
 		setShowRatingPopup(false);
 	};
@@ -290,7 +289,7 @@ export default function WatchPage({
 
 	const goToEpisode = (ep: EpisodeItem) => {
 		setActiveEpSlug(ep.slug);
-		playerRef.current?.scrollIntoView({behavior: "smooth"});
+		playerRef.current?.scrollIntoView({ behavior: "smooth" });
 	};
 
 	const goPrevEp = () => {
@@ -308,11 +307,11 @@ export default function WatchPage({
 	// Categories
 	const categories = useMemo(() => {
 		if (!film?.category) return {};
-		const result: Record<string, {id: string; name: string}[]> = {};
+		const result: Record<string, { id: string; name: string }[]> = {};
 		Object.values(film.category).forEach(
 			(cat: {
-				group?: {name: string};
-				list?: {id: string; name: string}[];
+				group?: { name: string };
+				list?: { id: string; name: string }[];
 			}) => {
 				const groupName = cat?.group?.name;
 				if (groupName && cat?.list) {
@@ -349,7 +348,7 @@ export default function WatchPage({
 								allow='autoplay; encrypted-media; picture-in-picture'
 								title={`${film.name} - ${currentEpisode.name}`}
 							/>
-						:	<div className='absolute inset-0 flex flex-col items-center justify-center gap-4'>
+							: <div className='absolute inset-0 flex flex-col items-center justify-center gap-4'>
 								<div className='w-20 h-20 rounded-full bg-white/5 flex items-center justify-center'>
 									<Film className='h-10 w-10 text-white/20' />
 								</div>
@@ -443,7 +442,7 @@ export default function WatchPage({
 									</h3>
 									{isEpListExpanded ?
 										<ChevronUp className='h-4 w-4 text-gray-500 group-hover:text-primary transition-colors' />
-									:	<ChevronDown className='h-4 w-4 text-gray-500 group-hover:text-primary transition-colors' />
+										: <ChevronDown className='h-4 w-4 text-gray-500 group-hover:text-primary transition-colors' />
 									}
 								</button>
 
@@ -489,10 +488,9 @@ export default function WatchPage({
 												onClick={() => goToEpisode(ep)}
 												className={`
                                                     relative h-11 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer group overflow-hidden
-                                                    ${
-														isActive ?
-															"bg-primary text-black font-bold shadow-lg shadow-primary/25 ring-2 ring-primary/50"
-														:	"bg-white/5 border border-white/10 text-gray-300 hover:bg-primary/15 hover:border-primary/30 hover:text-primary"
+                                                    ${isActive ?
+														"bg-primary text-black font-bold shadow-lg shadow-primary/25 ring-2 ring-primary/50"
+														: "bg-white/5 border border-white/10 text-gray-300 hover:bg-primary/15 hover:border-primary/30 hover:text-primary"
 													}
                                                 `}
 											>
@@ -512,14 +510,19 @@ export default function WatchPage({
 										);
 									})}
 								</div>
-							: isEpListExpanded ?
-								<div className='flex flex-col items-center justify-center py-12 gap-3 bg-white/[0.02] rounded-xl border border-white/5'>
-									<Film className='h-10 w-10 text-white/10' />
-									<p className='text-gray-500 text-sm'>
-										Chưa có tập phim nào.
-									</p>
-								</div>
-							:	null}
+								: isEpListExpanded ?
+									<div className='flex flex-col items-center justify-center py-12 gap-3 bg-white/[0.02] rounded-xl border border-white/5'>
+										<Film className='h-10 w-10 text-white/10' />
+										<p className='text-gray-500 text-sm'>
+											Chưa có tập phim nào.
+										</p>
+									</div>
+									: null}
+						</div>
+
+						{/* Comment Section */}
+						<div className='mt-6'>
+							<CommentSection filmSlug={slug} />
 						</div>
 					</div>
 
@@ -532,6 +535,7 @@ export default function WatchPage({
 									src={film.poster_url}
 									alt={film.name}
 									fill
+									sizes='380px'
 									className='object-cover'
 								/>
 								<div className='absolute inset-0 bg-gradient-to-t from-[#0a0a12] via-transparent to-transparent' />
@@ -650,10 +654,6 @@ export default function WatchPage({
 				</div>
 			</div>
 
-			{/* Comment Section */}
-			<div className='max-w-[1400px] mx-auto px-4 md:px-8 pb-12'>
-				<CommentSection filmSlug={slug} />
-			</div>
 
 			{/* Rating Popup */}
 			{showRatingPopup && (
@@ -670,7 +670,7 @@ export default function WatchPage({
 }
 
 // ─── Sub Components ────────────────────────────────────────
-function InfoRow({label, value}: {label: string; value: string}) {
+function InfoRow({ label, value }: { label: string; value: string }) {
 	return (
 		<div className='flex items-center justify-between gap-3'>
 			<span className='text-[11px] text-gray-500 font-medium uppercase tracking-wider shrink-0'>

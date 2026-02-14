@@ -1,11 +1,11 @@
 "use client";
 
-import React, {useState, useEffect, useRef} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {useRouter} from "next/navigation";
-import {Button} from "@/app/components/ui/button";
-import {Badge} from "@/app/components/ui/badge";
+import { useRouter } from "next/navigation";
+import { Button } from "@/app/components/ui/button";
+import { Badge } from "@/app/components/ui/badge";
 import {
 	Play,
 	Star,
@@ -24,15 +24,15 @@ import {
 	TabsList,
 	TabsTrigger,
 } from "@/app/components/ui/tabs";
-import {fetchLatestFilmsFromDB, MovieItem} from "@/app/services/movieService";
-import {Movie, FeaturedMovie} from "@/app/types/movie";
+import { fetchLatestFilmsFromDB, MovieItem } from "@/app/services/movieService";
+import { Movie, FeaturedMovie } from "@/app/types/movie";
 
-import {SectionTitle} from "@/app/components/common/SectionTitle";
-import {MovieCard} from "@/app/components/common/MovieCard";
-import {HeroCategorySection} from "@/app/components/common/HeroCategorySection";
-import {SplitCategorySection} from "@/app/components/common/SplitCategorySection";
-import {SingleMovieSection} from "@/app/components/common/SingleMovieSection";
-import {LoadingScreen} from "@/app/components/common/LoadingScreen";
+import { SectionTitle } from "@/app/components/common/SectionTitle";
+import { MovieCard } from "@/app/components/common/MovieCard";
+import { HeroCategorySection } from "@/app/components/common/HeroCategorySection";
+import { SplitCategorySection } from "@/app/components/common/SplitCategorySection";
+import { SingleMovieSection } from "@/app/components/common/SingleMovieSection";
+import { LoadingScreen } from "@/app/components/common/LoadingScreen";
 
 // --- Main Page ---
 
@@ -119,8 +119,8 @@ export default function HomePage() {
 					// Nếu tập hiện tại >= tổng số tập -> Hoàn Thành
 					if (!isNaN(num) && total && total > 0) {
 						return num >= total ?
-								`Hoàn Thành ${total} Tập`
-							:	`Tập ${num}/${total}`;
+							`Hoàn Thành ${total} Tập`
+							: `Tập ${num}/${total}`;
 					}
 					return current;
 				};
@@ -140,8 +140,8 @@ export default function HomePage() {
 							item.years[0].name
 						) ?
 							parseInt(item.years[0].name)
-						: item.created ? new Date(item.created).getFullYear()
-						: new Date().getFullYear(),
+							: item.created ? new Date(item.created).getFullYear()
+								: new Date().getFullYear(),
 					rating: item.rating || 0,
 					quality: item.quality,
 					poster: item.poster_url,
@@ -358,7 +358,7 @@ export default function HomePage() {
 										unoptimized
 										className='object-cover'
 									/>
-								:	<div className='absolute inset-0 bg-neutral-900/60 flex items-center justify-center'>
+									: <div className='absolute inset-0 bg-neutral-900/60 flex items-center justify-center'>
 										<div className='text-center'>
 											<Film className='h-16 w-16 text-white/20 mx-auto mb-3' />
 											<p className='text-white/40 text-sm font-medium'>
@@ -382,11 +382,10 @@ export default function HomePage() {
 						<button
 							key={index}
 							onClick={() => setCurrentSlide(index)}
-							className={`h-1.5 rounded-full transition-all duration-300 ${
-								currentSlide === index ? "w-8 bg-primary" : (
+							className={`h-1.5 rounded-full transition-all duration-300 ${currentSlide === index ? "w-8 bg-primary" : (
 									"w-2 bg-white/20 hover:bg-white/40"
 								)
-							}`}
+								}`}
 							aria-label={`Go to slide ${index + 1}`}
 						/>
 					))}
@@ -492,7 +491,7 @@ export default function HomePage() {
 			<HeroCategorySection
 				movies={categoryMovies.series}
 				title='Phim Bộ Mới'
-				href='/danh-sach/phim-bo'
+				href='/series'
 				icon={<Film className='h-5 w-5' />}
 			/>
 

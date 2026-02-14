@@ -1,11 +1,11 @@
-import {notFound} from "next/navigation";
-import type {Metadata} from "next";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
 import HeaderAndFooterLayout from "@/app/components/layouts/HeaderAndFooterLayout";
 import NothingLayout from "@/app/components/layouts/NothingLayout";
 import HeaderLayout from "../components/layouts/HeaderLayout";
 
-import {PrivateRoute, PublicRoute} from "@/app/components/common/RouteGuard";
+import { PrivateRoute, PublicRoute } from "@/app/components/common/RouteGuard";
 
 import HomePage from "@/app/pages/HomePage";
 import SignInPage from "@/app/pages/SignInPage";
@@ -19,7 +19,9 @@ import WatchPage from "@/app/pages/WatchPage";
 import SavedPage from "@/app/pages/SavedPage";
 import SearchPage from "@/app/pages/SearchPage";
 import WatchHistoryPage from "@/app/pages/WatchHistoryPage";
-import {fetchFilmDetail} from "@/app/services/movieService";
+import MoviePage from "@/app/pages/MoviePage";
+import SeriesPage from "@/app/pages/SeriesPage";
+import { fetchFilmDetail } from "@/app/services/movieService";
 
 interface RouteConfig {
 	path: string;
@@ -28,7 +30,7 @@ interface RouteConfig {
 		identifier?: string;
 		episodeSlug?: string;
 	}>;
-	layout: React.ComponentType<{children: React.ReactNode}>;
+	layout: React.ComponentType<{ children: React.ReactNode }>;
 	isPrivate?: boolean;
 	isDynamic?: boolean;
 }
@@ -105,6 +107,20 @@ const routes: RouteConfig[] = [
 		isDynamic: false,
 	},
 	{
+		path: "/movie",
+		component: MoviePage,
+		layout: HeaderAndFooterLayout,
+		isPrivate: false,
+		isDynamic: false,
+	},
+	{
+		path: "/series",
+		component: SeriesPage,
+		layout: HeaderAndFooterLayout,
+		isPrivate: false,
+		isDynamic: false,
+	},
+	{
 		path: "/info/:identifier",
 		component: InfoPage,
 		layout: HeaderLayout,
@@ -129,12 +145,12 @@ interface PageProps {
 function matchRoute(
 	path: string,
 	pattern: string,
-): {matched: boolean; params: Record<string, string>} {
+): { matched: boolean; params: Record<string, string> } {
 	const pathParts = path.split("/").filter(Boolean);
 	const patternParts = pattern.split("/").filter(Boolean);
 
 	if (pathParts.length !== patternParts.length) {
-		return {matched: false, params: {}};
+		return { matched: false, params: {} };
 	}
 
 	const params: Record<string, string> = {};
@@ -143,16 +159,16 @@ function matchRoute(
 		if (patternParts[i].startsWith(":")) {
 			params[patternParts[i].slice(1)] = pathParts[i];
 		} else if (patternParts[i] !== pathParts[i]) {
-			return {matched: false, params: {}};
+			return { matched: false, params: {} };
 		}
 	}
 
-	return {matched: true, params};
+	return { matched: true, params };
 }
 
-export async function generateMetadata({params}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
 	try {
-		const {slug} = await params;
+		const { slug } = await params;
 		const path = slug ? "/" + slug.join("/") : "/";
 
 		// Check if this is an info or watch route
@@ -245,8 +261,8 @@ export async function generateMetadata({params}: PageProps): Promise<Metadata> {
 	}
 }
 
-export default async function DynamicPage({params}: PageProps) {
-	const {slug} = await params;
+export default async function DynamicPage({ params }: PageProps) {
+	const { slug } = await params;
 	const path = slug ? "/" + slug.join("/") : "/";
 
 	let matchedRoute: RouteConfig | undefined;
@@ -270,7 +286,7 @@ export default async function DynamicPage({params}: PageProps) {
 		notFound();
 	}
 
-	const {component: Component, layout: Layout, isPrivate} = matchedRoute;
+	const { component: Component, layout: Layout, isPrivate } = matchedRoute;
 	const Guard = isPrivate ? PrivateRoute : PublicRoute;
 
 	return (

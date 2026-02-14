@@ -1,11 +1,11 @@
 "use client";
 
-import React, {useCallback, useState, useEffect, useMemo} from "react";
+import React, { useCallback, useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import {useRouter} from "next/navigation";
-import {Button} from "@/app/components/ui/button";
-import {Badge} from "@/app/components/ui/badge";
-import {Tabs, TabsList, TabsTrigger} from "@/app/components/ui/tabs";
+import { useRouter } from "next/navigation";
+import { Button } from "@/app/components/ui/button";
+import { Badge } from "@/app/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import {
 	Play,
 	Star,
@@ -30,15 +30,15 @@ import {
 	EpisodeServer,
 	incrementView,
 } from "@/app/services/movieService";
-import type {CategoryGroup} from "@/app/services/movieService";
+import type { CategoryGroup } from "@/app/services/movieService";
 import api from "@/app/utils/axios";
-import {useAuth} from "@/app/hooks/useAuth";
-import {useGlobalNotificationPopup} from "@/app/hooks/useGlobalNotificationPopup";
-import {usePageMetadata} from "@/app/hooks/usePageMetadata";
+import { useAuth } from "@/app/hooks/useAuth";
+import { useGlobalNotificationPopup } from "@/app/hooks/useGlobalNotificationPopup";
+import { usePageMetadata } from "@/app/hooks/usePageMetadata";
 import RatingPopup from "@/app/components/common/RatingPopup";
 
 function getCategories(category: Record<string, CategoryGroup>) {
-	const result: Record<string, {id: string; name: string}[]> = {};
+	const result: Record<string, { id: string; name: string }[]> = {};
 	if (!category) return result;
 	Object.values(category).forEach((cat) => {
 		const groupName = cat?.group?.name;
@@ -50,21 +50,21 @@ function getCategories(category: Record<string, CategoryGroup>) {
 }
 
 function formatEpisodeStatus(currentEp: string, totalEp: number) {
-	if (!currentEp) return {text: `${totalEp} Tập`, isComplete: false};
+	if (!currentEp) return { text: `${totalEp} Tập`, isComplete: false };
 
 	const lower = currentEp.toLowerCase();
 	if (lower.includes("full") || lower.includes("hoàn tất")) {
-		return {text: `Hoàn Thành ${totalEp} Tập`, isComplete: true};
+		return { text: `${totalEp} Tập`, isComplete: true };
 	}
 
 	const num = parseInt(currentEp.replace(/\D/g, ""));
 	if (!isNaN(num) && totalEp && totalEp > 0) {
 		if (num >= totalEp)
-			return {text: `Hoàn Thành ${totalEp} Tập`, isComplete: true};
-		return {text: `Tập ${num}/${totalEp}`, isComplete: false};
+			return { text: `Hoàn Thành ${totalEp} Tập`, isComplete: true };
+		return { text: `Tập ${num}/${totalEp}`, isComplete: false };
 	}
 
-	return {text: currentEp, isComplete: false};
+	return { text: currentEp, isComplete: false };
 }
 
 function InfoPageSkeleton() {
@@ -98,7 +98,7 @@ function InfoPageSkeleton() {
 					))}
 				</div>
 				<div className='grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2'>
-					{Array.from({length: 20}).map((_, i) => (
+					{Array.from({ length: 20 }).map((_, i) => (
 						<div
 							key={i}
 							className='h-11 bg-neutral-800 rounded-lg'
@@ -138,10 +138,10 @@ function InfoPageError({
 	);
 }
 
-export default function InfoPage({identifier}: {identifier?: string}) {
+export default function InfoPage({ identifier }: { identifier?: string }) {
 	const router = useRouter();
-	const {isAuthenticated} = useAuth();
-	const {showNotification} = useGlobalNotificationPopup();
+	const { isAuthenticated } = useAuth();
+	const { showNotification } = useGlobalNotificationPopup();
 	const [film, setFilm] = useState<FilmDetail | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -174,7 +174,7 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 			setError(
 				err instanceof Error ?
 					err.message
-				:	"Có lỗi xảy ra khi tải thông tin phim.",
+					: "Có lỗi xảy ra khi tải thông tin phim.",
 			);
 		} finally {
 			setLoading(false);
@@ -284,7 +284,7 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 	) => {
 		setUserRating(rating);
 		if (typeof filmAverage === "number" && film) {
-			setFilm({...film, rating: filmAverage});
+			setFilm({ ...film, rating: filmAverage });
 		}
 		setShowRatingPopup(false);
 	};
@@ -293,13 +293,18 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 		() => (film ? getCategories(film.category) : {}),
 		[film],
 	);
-	const genres = categories["Thể loại"] || [];
-	const countries = categories["Quốc gia"] || [];
-	const formats = categories["Định dạng"] || [];
-	const years = categories["Năm"] || [];
+	const genres = useMemo(() => categories["Thể loại"] || [], [categories]);
+	const countries = useMemo(() => categories["Quốc gia"] || [], [categories]);
+	const formats = useMemo(() => categories["Định dạng"] || [], [categories]);
+	const years = useMemo(() => categories["Năm"] || [], [categories]);
+
+	const isSingleFilm = useMemo(
+		() => formats.some((f) => f.name.toLowerCase().includes("lẻ")),
+		[formats],
+	);
 
 	const episodeStatus = useMemo(() => {
-		if (!film) return {text: "", isComplete: false};
+		if (!film) return { text: "", isComplete: false };
 		return formatEpisodeStatus(film.current_episode, film.total_episodes);
 	}, [film]);
 
@@ -406,7 +411,7 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 									<Eye className='h-3.5 w-3.5 mr-1' />
 									{film.views ?
 										film.views.toLocaleString()
-									:	0}{" "}
+										: 0}{" "}
 									lượt xem
 								</Badge>
 								{years.length > 0 && (
@@ -447,15 +452,14 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 							{/* Episode Status */}
 							<div className='mb-5 flex items-center gap-2 justify-center lg:justify-start'>
 								<div
-									className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${
-										episodeStatus.isComplete ?
-											"bg-green-500/15 text-green-400 border border-green-500/30"
-										:	"bg-primary/15 text-primary border border-primary/30"
-									}`}
+									className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${episodeStatus.isComplete ?
+										"bg-green-500/15 text-green-400 border border-green-500/30"
+										: "bg-primary/15 text-primary border border-primary/30"
+										}`}
 								>
 									{episodeStatus.isComplete ?
 										<CheckCircle2 className='h-4 w-4' />
-									:	<Tv className='h-4 w-4' />}
+										: <Tv className='h-4 w-4' />}
 									{episodeStatus.text}
 								</div>
 								{film.language && (
@@ -513,7 +517,7 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 									/>
 									{lastWatchedEp ?
 										`Tiếp tục xem tập ${lastWatchedEp.episodeName || lastWatchedEp.episodeSlug}`
-									:	"Xem Ngay"}
+										: "Xem Ngay"}
 								</Button>
 
 								<div className='flex items-center gap-2'>
@@ -525,11 +529,11 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 										>
 											<Bookmark className='h-5 w-5' />
 										</Button>
-									:	<Button
+										: <Button
 											variant='outline'
 											size='icon'
 											onClick={handleToggleSave}
-											className='border-white/15 rounded-full h-11 w-11 cursor-pointer backdrop-blur-sm transition-all text-gray-300 hover:bg-white/10 hover:text-white'
+											className='border-white/15 rounded-full h-12 w-12 cursor-pointer backdrop-blur-sm transition-all text-gray-300 hover:bg-white/10 hover:text-white'
 										>
 											<Bookmark className='h-5 w-5' />
 										</Button>
@@ -537,7 +541,7 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 									<Button
 										variant='outline'
 										size='icon'
-										className='border-white/15 text-gray-300 hover:bg-white/10 hover:text-white rounded-full h-11 w-11 cursor-pointer backdrop-blur-sm transition-all'
+										className='border-white/15 text-gray-300 hover:bg-white/10 hover:text-white rounded-full h-12 w-12 cursor-pointer backdrop-blur-sm transition-all'
 									>
 										<Share2 className='h-5 w-5' />
 									</Button>
@@ -587,7 +591,9 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 
 			{/* Two-Column Content Section */}
 			<section className='w-full px-4 lg:px-32 py-6'>
-				<div className='grid grid-cols-1 lg:grid-cols-[30%_1fr] gap-6 lg:gap-8'>
+				<div
+					className='grid gap-6 lg:gap-8 grid-cols-1 lg:grid-cols-[30%_1fr]'
+				>
 					{/* LEFT COLUMN — Overview & Cast (30%) */}
 					<div className='bg-white/[0.03] rounded-2xl p-6 border border-white/5 space-y-8 order-2 lg:order-1 h-fit'>
 						{/* Description */}
@@ -613,7 +619,7 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 										>
 											{isDescExpanded ?
 												"Thu gọn"
-											:	"Xem thêm"}
+												: "Xem thêm"}
 											<ChevronDown
 												className={`h-3.5 w-3.5 transition-transform ${isDescExpanded ? "rotate-180" : ""}`}
 											/>
@@ -700,7 +706,7 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 												</div>
 											))}
 									</div>
-								:	<p className='text-gray-500 text-sm py-2 text-center italic'>
+									: <p className='text-gray-500 text-sm py-2 text-center italic'>
 										Chưa có thông tin diễn viên.
 									</p>
 								}
@@ -708,89 +714,96 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 						</div>
 					</div>
 
-					{/* RIGHT COLUMN — Episodes (70%) */}
+					{/* RIGHT COLUMN — Episodes & Comments (70%) */}
 					<div className='space-y-5 order-1 lg:order-2'>
-						<div className='flex items-center justify-between flex-wrap gap-4 mb-2'>
-							<h3
-								id='episode-list'
-								className='text-lg font-bold text-white flex items-center gap-2'
-							>
-								<Tv className='h-5 w-5 text-primary' />
-								Danh sách tập phim
-							</h3>
+						{!isSingleFilm && (
+							<>
+								<div className='flex items-center justify-between flex-wrap gap-4 mb-2'>
+									<h3
+										id='episode-list'
+										className='text-lg font-bold text-white flex items-center gap-2'
+									>
+										<Tv className='h-5 w-5 text-primary' />
+										Danh sách tập phim
+									</h3>
 
-							{/* Server Selector */}
-							{film.episodes && film.episodes.length > 1 && (
-								<Tabs
-									value={String(activeServerIdx)}
-									onValueChange={(v) =>
-										setActiveServerIdx(Number(v))
-									}
-								>
-									<TabsList className='bg-white/5 border border-white/10 h-9 p-1'>
-										{film.episodes.map((server, idx) => (
-											<TabsTrigger
-												key={idx}
-												value={String(idx)}
-												className='data-[state=active]:bg-primary data-[state=active]:text-black h-full px-4 rounded-md transition-all font-medium'
-											>
-												{server.server_name}
-											</TabsTrigger>
-										))}
-									</TabsList>
-								</Tabs>
-							)}
-						</div>
-
-						{/* Episode Grid */}
-						{activeServer && activeServer.items.length > 0 ?
-							<div className='grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 xl:grid-cols-10 gap-2'>
-								{activeServer.items.map((ep) => {
-									const isLastWatched =
-										lastWatchedEp?.episodeSlug === ep.slug;
-									return (
-										<button
-											key={ep.slug}
-											onClick={() =>
-												router.push(
-													`/xem/${film.slug}/${ep.slug}`,
-												)
+									{/* Server Selector */}
+									{film.episodes && film.episodes.length > 1 && (
+										<Tabs
+											value={String(activeServerIdx)}
+											onValueChange={(v) =>
+												setActiveServerIdx(Number(v))
 											}
-											className={`relative h-11 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer group ${
-												isLastWatched ?
-													"bg-primary/20 border border-primary/40 text-primary ring-1 ring-primary/30"
-												:	"bg-white/5 border border-white/10 text-gray-300 hover:bg-primary/20 hover:border-primary/40 hover:text-primary"
-											}`}
 										>
-											<span className='relative z-10 flex items-center justify-center gap-1'>
-												{isLastWatched && (
-													<Play
-														className='h-3 w-3'
-														fill='currentColor'
-													/>
+											<TabsList className='bg-white/5 border border-white/10 h-9 p-1'>
+												{film.episodes.map(
+													(server, idx) => (
+														<TabsTrigger
+															key={idx}
+															value={String(idx)}
+															className='data-[state=active]:bg-primary data-[state=active]:text-black h-full px-4 rounded-md transition-all font-medium'
+														>
+															{server.server_name}
+														</TabsTrigger>
+													),
 												)}
-												{ep.name}
-											</span>
-											{!isLastWatched && (
-												<div className='absolute inset-0 bg-primary/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200' />
-											)}
-										</button>
-									);
-								})}
-							</div>
-						:	<div className='flex flex-col items-center justify-center py-20 gap-3 bg-white/[0.02] rounded-2xl border border-white/5'>
-								<Film className='h-12 w-12 text-white/10' />
-								<p className='text-gray-500 text-sm'>
-									Chưa có tập phim nào.
-								</p>
-							</div>
-						}
+											</TabsList>
+										</Tabs>
+									)}
+								</div>
+
+								{/* Episode Grid */}
+								{activeServer && activeServer.items.length > 0 ?
+									<div className='grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 xl:grid-cols-10 gap-2'>
+										{activeServer.items.map((ep) => {
+											const isLastWatched =
+												lastWatchedEp?.episodeSlug ===
+												ep.slug;
+											return (
+												<button
+													key={ep.slug}
+													onClick={() =>
+														router.push(
+															`/xem/${film.slug}/${ep.slug}`,
+														)
+													}
+													className={`relative h-11 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer group ${isLastWatched ?
+														"bg-primary/20 border border-primary/40 text-primary ring-1 ring-primary/30"
+														: "bg-white/5 border border-white/10 text-gray-300 hover:bg-primary/20 hover:border-primary/40 hover:text-primary"
+														}`}
+												>
+													<span className='relative z-10 flex items-center justify-center gap-1'>
+														{isLastWatched && (
+															<Play
+																className='h-3 w-3'
+																fill='currentColor'
+															/>
+														)}
+														{ep.name}
+													</span>
+													{!isLastWatched && (
+														<div className='absolute inset-0 bg-primary/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200' />
+													)}
+												</button>
+											);
+										})}
+									</div>
+									: <div className='flex flex-col items-center justify-center py-20 gap-3 bg-white/[0.02] rounded-2xl border border-white/5'>
+										<Film className='h-12 w-12 text-white/10' />
+										<p className='text-gray-500 text-sm'>
+											Chưa có tập phim nào.
+										</p>
+									</div>
+								}
+							</>
+						)}
 
 						{/* Comment Section */}
-						<div className='mt-8'>
+						<div className={isSingleFilm ? '' : 'mt-8'}>
 							<CommentSection filmSlug={slug} />
 						</div>
 					</div>
+
 				</div>
 			</section>
 
@@ -809,7 +822,7 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 }
 
 // --- Sub Components ---
-function InfoRow({label, value}: {label: string; value: string}) {
+function InfoRow({ label, value }: { label: string; value: string }) {
 	return (
 		<div className='flex items-start justify-between gap-4'>
 			<span className='text-xs text-gray-500 font-medium shrink-0 uppercase tracking-wider'>

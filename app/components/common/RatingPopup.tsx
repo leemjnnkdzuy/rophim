@@ -128,13 +128,13 @@ const RatingPopup: React.FC<RatingPopupProps> = ({
 						<div className='flex gap-3 w-full'>
 							<button
 								onClick={onClose}
-								className='flex-1 px-4 py-3 rounded-lg border border-white/10 text-white hover:bg-white/5 transition-colors font-medium'
+								className='flex-1 px-4 py-3 h-10 rounded-lg border border-white/10 text-white hover:bg-white/5 transition-colors font-medium flex items-center justify-center'
 							>
 								Để sau
 							</button>
 							<Button
 								onClick={handleLogin}
-								className='flex-1 bg-cyan-400 hover:bg-cyan-500 text-black font-bold rounded-lg transition-colors shadow-lg shadow-cyan-400/20'
+								className='flex-1 h-10 bg-cyan-400 hover:bg-cyan-500 text-black font-bold rounded-lg transition-colors shadow-lg shadow-cyan-400/20'
 							>
 								<LogIn className='w-4 h-4 mr-2' />
 								Đăng nhập
