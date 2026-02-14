@@ -1,6 +1,7 @@
 "use client";
 
-import React, {useState, useEffect, useCallback, useRef} from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
 	MessageCircle,
@@ -15,12 +16,12 @@ import {
 	User as UserIcon,
 	Smile,
 } from "lucide-react";
-import {Button} from "@/app/components/ui/button";
-import {Badge} from "@/app/components/ui/badge";
+import { Button } from "@/app/components/ui/button";
+import { Badge } from "@/app/components/ui/badge";
 import ConfirmDeletePopup from "@/app/components/common/ComfirmDeletePopup";
 import api from "@/app/utils/axios";
-import {useAuth} from "@/app/hooks/useAuth";
-import {useGlobalNotificationPopup} from "@/app/hooks/useGlobalNotificationPopup";
+import { useAuth } from "@/app/hooks/useAuth";
+import { useGlobalNotificationPopup } from "@/app/hooks/useGlobalNotificationPopup";
 
 // ─── Types ─────────────────────────────────────────────────
 interface CommentData {
@@ -73,8 +74,8 @@ function CommentInput({
 	onCancel?: () => void;
 	autoFocus?: boolean;
 }) {
-	const {isAuthenticated, user} = useAuth();
-	const {showNotification} = useGlobalNotificationPopup();
+	const { isAuthenticated, user } = useAuth();
+	const { showNotification } = useGlobalNotificationPopup();
 	const [content, setContent] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -226,7 +227,7 @@ function CommentInput({
 						className='rounded-full object-cover'
 						unoptimized
 					/>
-				:	<div
+					: <div
 						className={`${parentId ? "w-8 h-8" : "w-9 h-9"} rounded-full bg-primary/20 flex items-center justify-center`}
 					>
 						<span className='text-xs font-bold text-primary uppercase'>
@@ -260,11 +261,10 @@ function CommentInput({
 						<button
 							type='button'
 							onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-							className={`p-1 rounded-md transition-colors cursor-pointer ${
-								showEmojiPicker ?
+							className={`p-1 rounded-md transition-colors cursor-pointer ${showEmojiPicker ?
 									"text-primary bg-primary/10"
-								:	"text-gray-500 hover:text-primary hover:bg-white/5"
-							}`}
+									: "text-gray-500 hover:text-primary hover:bg-white/5"
+								}`}
 						>
 							<Smile className='h-4 w-4' />
 						</button>
@@ -309,7 +309,7 @@ function CommentInput({
 						>
 							{isSubmitting ?
 								<Loader2 className='h-3.5 w-3.5 animate-spin' />
-							:	<>
+								: <>
 									<Send className='h-3.5 w-3.5 mr-1' />
 									Gửi
 								</>
@@ -338,7 +338,7 @@ function CommentItem({
 	onDeleted: (commentId: string) => void;
 	onReplyAdded: (parentId: string, reply: CommentData) => void;
 }) {
-	const {showNotification} = useGlobalNotificationPopup();
+	const { showNotification } = useGlobalNotificationPopup();
 	const [likes, setLikes] = useState<string[]>(comment.likes || []);
 	const [isPinned, setIsPinned] = useState(comment.isPinned);
 	const [showReplyInput, setShowReplyInput] = useState(false);
@@ -381,7 +381,7 @@ function CommentItem({
 				showNotification(
 					response.data.isPinned ?
 						"Đã ghim bình luận"
-					:	"Đã bỏ ghim bình luận",
+						: "Đã bỏ ghim bình luận",
 					"success",
 				);
 			}
@@ -443,11 +443,19 @@ function CommentItem({
 		onReplyAdded(comment._id, reply);
 	};
 
+	const router = useRouter();
+	const navigateToProfile = () => {
+		router.push(`/profile/${comment.username}`);
+	};
+
 	return (
 		<div className='group'>
 			<div className='flex gap-3'>
 				{/* Avatar */}
-				<div className='flex-shrink-0 mt-0.5'>
+				<div
+					className='flex-shrink-0 mt-0.5 cursor-pointer'
+					onClick={navigateToProfile}
+				>
 					{comment.userAvatar ?
 						<Image
 							src={comment.userAvatar}
@@ -457,7 +465,7 @@ function CommentItem({
 							className='rounded-full object-cover'
 							unoptimized
 						/>
-					:	<div className='w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center'>
+						: <div className='w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center'>
 							<span className='text-xs font-bold text-primary uppercase'>
 								{comment.username?.charAt(0) || "?"}
 							</span>
@@ -469,7 +477,10 @@ function CommentItem({
 				<div className='flex-1 min-w-0'>
 					<div className='bg-white/[0.04] rounded-xl px-4 py-3 border border-white/5'>
 						<div className='flex items-center gap-2 mb-1'>
-							<span className='text-sm font-semibold text-white'>
+							<span
+								className='text-sm font-semibold text-white cursor-pointer hover:underline hover:text-primary transition-all'
+								onClick={navigateToProfile}
+							>
 								{comment.username}
 							</span>
 							{isPinned && (
@@ -491,11 +502,10 @@ function CommentItem({
 					<div className='flex items-center gap-1 mt-1.5 ml-1'>
 						<button
 							onClick={handleLike}
-							className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all cursor-pointer ${
-								isLiked ?
+							className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all cursor-pointer ${isLiked ?
 									"text-red-400 hover:bg-red-500/10"
-								:	"text-gray-500 hover:text-red-400 hover:bg-white/5"
-							}`}
+									: "text-gray-500 hover:text-red-400 hover:bg-white/5"
+								}`}
 						>
 							<Heart
 								className='h-3.5 w-3.5'
@@ -519,11 +529,10 @@ function CommentItem({
 						{isAdmin && !comment.parentId && (
 							<button
 								onClick={handlePin}
-								className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all cursor-pointer ${
-									isPinned ?
+								className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all cursor-pointer ${isPinned ?
 										"text-amber-400 hover:bg-amber-500/10"
-									:	"text-gray-500 hover:text-amber-400 hover:bg-white/5"
-								}`}
+										: "text-gray-500 hover:text-amber-400 hover:bg-white/5"
+									}`}
 							>
 								<Pin className='h-3.5 w-3.5' />
 								{isPinned ? "Bỏ ghim" : "Ghim"}
@@ -548,7 +557,7 @@ function CommentItem({
 									description={
 										!comment.parentId ?
 											"Các phản hồi của bình luận này cũng sẽ bị xóa."
-										:	""
+											: ""
 									}
 									onConfirm={handleConfirmDelete}
 									onCancel={() => setShowDeleteConfirm(false)}
@@ -565,13 +574,13 @@ function CommentItem({
 						>
 							{loadingReplies ?
 								<Loader2 className='h-3 w-3 animate-spin' />
-							:	<ChevronDown
+								: <ChevronDown
 									className={`h-3 w-3 transition-transform ${showReplies ? "rotate-180" : ""}`}
 								/>
 							}
 							{showReplies ?
 								"Ẩn phản hồi"
-							:	`Xem ${replyCount} phản hồi`}
+								: `Xem ${replyCount} phản hồi`}
 						</button>
 					)}
 
@@ -621,8 +630,8 @@ function CommentItem({
 }
 
 // ─── Main CommentSection ───────────────────────────────────
-export default function CommentSection({filmSlug}: {filmSlug: string}) {
-	const {user} = useAuth();
+export default function CommentSection({ filmSlug }: { filmSlug: string }) {
+	const { user } = useAuth();
 	const [comments, setComments] = useState<CommentData[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(false);
@@ -711,59 +720,59 @@ export default function CommentSection({filmSlug}: {filmSlug: string}) {
 				<div className='flex items-center justify-center py-12'>
 					<Loader2 className='h-8 w-8 text-primary animate-spin' />
 				</div>
-			: error ?
-				<div className='flex flex-col items-center justify-center py-12 gap-3'>
-					<AlertCircle className='h-8 w-8 text-red-400' />
-					<p className='text-sm text-gray-400'>
-						Không thể tải bình luận
-					</p>
-					<Button
-						variant='outline'
-						size='sm'
-						onClick={() => fetchComments(1)}
-						className='border-white/10 text-gray-300 hover:bg-white/10 cursor-pointer text-xs'
-					>
-						Thử lại
-					</Button>
-				</div>
-			: comments.length === 0 ?
-				<div className='flex flex-col items-center justify-center py-12 gap-2'>
-					<MessageCircle className='h-10 w-10 text-white/10' />
-					<p className='text-sm text-gray-500'>
-						Chưa có bình luận nào. Hãy là người đầu tiên!
-					</p>
-				</div>
-			:	<div className='space-y-4'>
-					{comments.map((comment) => (
-						<CommentItem
-							key={comment._id}
-							comment={comment}
-							currentUserId={currentUserId}
-							isAdmin={isAdmin}
-							filmSlug={filmSlug}
-							onDeleted={handleCommentDeleted}
-							onReplyAdded={handleReplyAdded}
-						/>
-					))}
-
-					{/* Load More */}
-					{hasMore && (
-						<div className='flex justify-center pt-2'>
-							<Button
-								variant='outline'
-								size='sm'
-								onClick={() => fetchComments(page + 1, true)}
-								disabled={loadingMore}
-								className='border-white/10 text-gray-300 hover:bg-white/10 rounded-full px-6 cursor-pointer transition-all text-xs'
-							>
-								{loadingMore ?
-									<Loader2 className='h-4 w-4 animate-spin mr-1.5' />
-								:	<ChevronDown className='h-4 w-4 mr-1.5' />}
-								Xem thêm bình luận
-							</Button>
+				: error ?
+					<div className='flex flex-col items-center justify-center py-12 gap-3'>
+						<AlertCircle className='h-8 w-8 text-red-400' />
+						<p className='text-sm text-gray-400'>
+							Không thể tải bình luận
+						</p>
+						<Button
+							variant='outline'
+							size='sm'
+							onClick={() => fetchComments(1)}
+							className='border-white/10 text-gray-300 hover:bg-white/10 cursor-pointer text-xs'
+						>
+							Thử lại
+						</Button>
+					</div>
+					: comments.length === 0 ?
+						<div className='flex flex-col items-center justify-center py-12 gap-2'>
+							<MessageCircle className='h-10 w-10 text-white/10' />
+							<p className='text-sm text-gray-500'>
+								Chưa có bình luận nào. Hãy là người đầu tiên!
+							</p>
 						</div>
-					)}
-				</div>
+						: <div className='space-y-4'>
+							{comments.map((comment) => (
+								<CommentItem
+									key={comment._id}
+									comment={comment}
+									currentUserId={currentUserId}
+									isAdmin={isAdmin}
+									filmSlug={filmSlug}
+									onDeleted={handleCommentDeleted}
+									onReplyAdded={handleReplyAdded}
+								/>
+							))}
+
+							{/* Load More */}
+							{hasMore && (
+								<div className='flex justify-center pt-2'>
+									<Button
+										variant='outline'
+										size='sm'
+										onClick={() => fetchComments(page + 1, true)}
+										disabled={loadingMore}
+										className='border-white/10 text-gray-300 hover:bg-white/10 rounded-full px-6 cursor-pointer transition-all text-xs'
+									>
+										{loadingMore ?
+											<Loader2 className='h-4 w-4 animate-spin mr-1.5' />
+											: <ChevronDown className='h-4 w-4 mr-1.5' />}
+										Xem thêm bình luận
+									</Button>
+								</div>
+							)}
+						</div>
 			}
 		</div>
 	);

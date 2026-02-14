@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-    Edit2,
     Share2,
     Bookmark,
     Eye,
@@ -249,18 +248,6 @@ export default function ProfilePage({ identifier }: { identifier?: string }) {
 
                             {/* Action Buttons */}
                             <div className="flex items-center gap-2">
-                                {isOwn && (
-                                    <Button
-                                        onClick={() =>
-                                            router.push("/change-username")
-                                        }
-                                        variant="outline"
-                                        className="border-white/10 bg-white/5 hover:bg-white/10 text-white text-xs rounded-full px-4 h-8 gap-1.5 cursor-pointer"
-                                    >
-                                        <Edit2 className="w-3.5 h-3.5" />
-                                        Chỉnh sửa hồ sơ
-                                    </Button>
-                                )}
                                 <Button
                                     onClick={handleShareProfile}
                                     variant="outline"

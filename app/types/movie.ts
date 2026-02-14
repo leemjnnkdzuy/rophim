@@ -16,6 +16,7 @@ export interface Movie {
     language?: string;
     description?: string;
     backdrop?: string;
+    country?: string;
 }
 
 export interface FeaturedMovie extends Movie {

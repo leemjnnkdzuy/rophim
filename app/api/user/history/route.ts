@@ -1,8 +1,8 @@
-import {NextRequest, NextResponse} from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import connectDatabase from "@/app/utils/connectDB";
 import User from "@/app/models/User";
 import Film from "@/app/models/Film";
-import {verifyAccessToken} from "@/app/utils/jwt";
+import { verifyAccessToken } from "@/app/utils/jwt";
 
 function getUserId(request: NextRequest): string | null {
 	const accessToken = request.cookies.get("access_token")?.value;
@@ -11,16 +11,13 @@ function getUserId(request: NextRequest): string | null {
 	return payload?.userId || null;
 }
 
-// GET: Retrieve watch history
-// ?slug=xxx → returns last watched episode for a specific film
-// No params → returns full watch history list
 export async function GET(request: NextRequest) {
 	try {
 		const userId = getUserId(request);
 		if (!userId) {
 			return NextResponse.json(
-				{success: false, message: "Chưa đăng nhập"},
-				{status: 401},
+				{ success: false, message: "Chưa đăng nhập" },
+				{ status: 401 },
 			);
 		}
 
@@ -29,8 +26,8 @@ export async function GET(request: NextRequest) {
 		const user = await User.findById(userId).select("watchHistory");
 		if (!user) {
 			return NextResponse.json(
-				{success: false, message: "Không tìm thấy người dùng"},
-				{status: 404},
+				{ success: false, message: "Không tìm thấy người dùng" },
+				{ status: 404 },
 			);
 		}
 
@@ -86,7 +83,7 @@ export async function GET(request: NextRequest) {
 
 		// Fetch film details from DB
 		const filmSlugs = uniqueHistory.map((h) => h.filmSlug);
-		const films = await Film.find({slug: {$in: filmSlugs}}).lean();
+		const films = await Film.find({ slug: { $in: filmSlugs } }).lean();
 		const filmMap = new Map(films.map((film) => [film.slug, film]));
 
 		const enrichedHistory = uniqueHistory
@@ -125,8 +122,8 @@ export async function GET(request: NextRequest) {
 	} catch (error) {
 		console.error("Watch history GET error:", error);
 		return NextResponse.json(
-			{success: false, message: "Lỗi server. Vui lòng thử lại sau."},
-			{status: 500},
+			{ success: false, message: "Lỗi server. Vui lòng thử lại sau." },
+			{ status: 500 },
 		);
 	}
 }
@@ -137,18 +134,18 @@ export async function POST(request: NextRequest) {
 		const userId = getUserId(request);
 		if (!userId) {
 			return NextResponse.json(
-				{success: false, message: "Chưa đăng nhập"},
-				{status: 401},
+				{ success: false, message: "Chưa đăng nhập" },
+				{ status: 401 },
 			);
 		}
 
 		const body = await request.json();
-		const {filmSlug, episodeSlug, episodeName, serverIdx} = body;
+		const { filmSlug, episodeSlug, episodeName, serverIdx } = body;
 
 		if (!filmSlug || !episodeSlug) {
 			return NextResponse.json(
-				{success: false, message: "Thiếu thông tin phim hoặc tập phim"},
-				{status: 400},
+				{ success: false, message: "Thiếu thông tin phim hoặc tập phim" },
+				{ status: 400 },
 			);
 		}
 
@@ -157,8 +154,8 @@ export async function POST(request: NextRequest) {
 		const user = await User.findById(userId).select("watchHistory");
 		if (!user) {
 			return NextResponse.json(
-				{success: false, message: "Không tìm thấy người dùng"},
-				{status: 404},
+				{ success: false, message: "Không tìm thấy người dùng" },
+				{ status: 404 },
 			);
 		}
 
@@ -195,57 +192,8 @@ export async function POST(request: NextRequest) {
 	} catch (error) {
 		console.error("Watch history POST error:", error);
 		return NextResponse.json(
-			{success: false, message: "Lỗi server. Vui lòng thử lại sau."},
-			{status: 500},
-		);
-	}
-}
-
-// DELETE: Remove a film from watch history or clear all
-export async function DELETE(request: NextRequest) {
-	try {
-		const userId = getUserId(request);
-		if (!userId) {
-			return NextResponse.json(
-				{success: false, message: "Chưa đăng nhập"},
-				{status: 401},
-			);
-		}
-
-		const url = new URL(request.url);
-		const slug = url.searchParams.get("slug");
-
-		await connectDatabase();
-
-		const user = await User.findById(userId).select("watchHistory");
-		if (!user) {
-			return NextResponse.json(
-				{success: false, message: "Không tìm thấy người dùng"},
-				{status: 404},
-			);
-		}
-
-		if (slug) {
-			// Remove specific film from history
-			user.watchHistory = (user.watchHistory || []).filter(
-				(h) => h.filmSlug !== slug,
-			);
-		} else {
-			// Clear all history
-			user.watchHistory = [];
-		}
-
-		await user.save();
-
-		return NextResponse.json({
-			success: true,
-			message: slug ? "Đã xóa khỏi lịch sử" : "Đã xóa toàn bộ lịch sử",
-		});
-	} catch (error) {
-		console.error("Watch history DELETE error:", error);
-		return NextResponse.json(
-			{success: false, message: "Lỗi server. Vui lòng thử lại sau."},
-			{status: 500},
+			{ success: false, message: "Lỗi server. Vui lòng thử lại sau." },
+			{ status: 500 },
 		);
 	}
 }

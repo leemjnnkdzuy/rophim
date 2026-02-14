@@ -21,6 +21,8 @@ import SearchPage from "@/app/pages/SearchPage";
 import WatchHistoryPage from "@/app/pages/WatchHistoryPage";
 import MoviePage from "@/app/pages/MoviePage";
 import SeriesPage from "@/app/pages/SeriesPage";
+import CountriesFilterPage from "@/app/pages/CountriesFilterPage";
+import GenresFilterPage from "@/app/pages/GenresFilterPage";
 import { fetchFilmDetail } from "@/app/services/movieService";
 
 interface RouteConfig {
@@ -29,6 +31,7 @@ interface RouteConfig {
 		plotId?: string;
 		identifier?: string;
 		episodeSlug?: string;
+		filterValue?: string;
 	}>;
 	layout: React.ComponentType<{ children: React.ReactNode }>;
 	isPrivate?: boolean;
@@ -126,6 +129,20 @@ const routes: RouteConfig[] = [
 		layout: HeaderAndFooterLayout,
 		isPrivate: false,
 		isDynamic: false,
+	},
+	{
+		path: "/the-loai/:identifier",
+		component: GenresFilterPage,
+		layout: HeaderAndFooterLayout,
+		isPrivate: false,
+		isDynamic: true,
+	},
+	{
+		path: "/quoc-gia/:identifier",
+		component: CountriesFilterPage,
+		layout: HeaderAndFooterLayout,
+		isPrivate: false,
+		isDynamic: true,
 	},
 	{
 		path: "/info/:identifier",
@@ -296,6 +313,15 @@ export default async function DynamicPage({ params }: PageProps) {
 	const { component: Component, layout: Layout, isPrivate } = matchedRoute;
 	const Guard = isPrivate ? PrivateRoute : PublicRoute;
 
+	// Determine filter value for genre/country filter pages
+	let filterValue: string | undefined;
+	if (
+		matchedRoute.path === "/the-loai/:identifier" ||
+		matchedRoute.path === "/quoc-gia/:identifier"
+	) {
+		filterValue = routeParams.identifier;
+	}
+
 	return (
 		<Layout>
 			<Guard>
@@ -303,6 +329,7 @@ export default async function DynamicPage({ params }: PageProps) {
 					plotId={routeParams.id}
 					identifier={routeParams.identifier}
 					episodeSlug={routeParams.episodeSlug}
+					filterValue={filterValue}
 				/>
 			</Guard>
 		</Layout>

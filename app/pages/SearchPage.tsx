@@ -1,11 +1,11 @@
 "use client";
 
-import React, {useState, useEffect, useCallback} from "react";
-import {useSearchParams} from "next/navigation";
-import {MovieCard} from "@/app/components/common/MovieCard";
-import {Input} from "@/app/components/ui/input";
-import {Button} from "@/app/components/ui/button";
-import {Badge} from "@/app/components/ui/badge";
+import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
+import { MovieCard } from "@/app/components/common/MovieCard";
+import { Input } from "@/app/components/ui/input";
+import { Button } from "@/app/components/ui/button";
+import { Badge } from "@/app/components/ui/badge";
 import {
 	Search,
 	Filter,
@@ -17,17 +17,14 @@ import {
 	Sparkles,
 } from "lucide-react";
 import api from "@/app/utils/axios";
-import {Movie} from "@/app/types/movie";
+import { Movie } from "@/app/types/movie";
 
 // Filter options
 const SORT_OPTIONS = [
-	{value: "views", label: "Lượt xem", icon: TrendingUp},
-	{value: "rating", label: "Đánh giá", icon: Sparkles},
-	{value: "latest", label: "Mới nhất", icon: Clock},
+	{ value: "views", label: "Lượt xem", icon: TrendingUp },
+	{ value: "rating", label: "Đánh giá", icon: Sparkles },
+	{ value: "latest", label: "Mới nhất", icon: Clock },
 ];
-
-const QUALITY_OPTIONS = ["Tất cả", "HD", "FHD", "4K", "CAM"];
-const YEAR_OPTIONS = ["Tất cả", "2026", "2025", "2024", "2023", "2022", "2021"];
 
 export default function SearchPage() {
 	const searchParams = useSearchParams();
@@ -43,15 +40,31 @@ export default function SearchPage() {
 	// Filter states
 	const [showFilters, setShowFilters] = useState(false);
 	const [selectedSort, setSelectedSort] = useState("views");
-	const [selectedQuality, setSelectedQuality] = useState("Tất cả");
+	const [selectedCountry, setSelectedCountry] = useState("Tất cả");
 	const [selectedYear, setSelectedYear] = useState("Tất cả");
 	const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+	const [yearOptions, setYearOptions] = useState<string[]>([]);
+
+	// Fetch years on mount
+	useEffect(() => {
+		const fetchYears = async () => {
+			try {
+				const res = await api.get("/years");
+				if (Array.isArray(res.data)) {
+					setYearOptions(["Tất cả", ...res.data]);
+				}
+			} catch {
+				console.error("Failed to fetch years");
+			}
+		};
+		fetchYears();
+	}, []);
 
 	// Format episode like HomePage
 	const formatEpisode = (film: Record<string, unknown>): string => {
 		// Nếu là phim lẻ -> không hiện tập
 		if (
-			(film.formats as Array<{name: string}>)?.some(
+			(film.formats as Array<{ name: string }>)?.some(
 				(f) => f.name === "Phim lẻ",
 			) ||
 			(film.total_episodes as number) === 1
@@ -77,8 +90,8 @@ export default function SearchPage() {
 		// Nếu tập hiện tại >= tổng số tập -> Hoàn Thành
 		if (!isNaN(num) && total && total > 0) {
 			return num >= total ?
-					`Hoàn Thành ${total} Tập`
-				:	`Tập ${num}/${total}`;
+				`Hoàn Thành ${total} Tập`
+				: `Tập ${num}/${total}`;
 		}
 		return current;
 	};
@@ -111,20 +124,20 @@ export default function SearchPage() {
 					title: (film.name as string) || "",
 					originalTitle: (film.original_name as string) || "",
 					year:
-						(film.years as Array<{name: string}>)?.[0]?.name ?
+						(film.years as Array<{ name: string }>)?.[0]?.name ?
 							parseInt(
-								(film.years as Array<{name: string}>)[0].name,
+								(film.years as Array<{ name: string }>)[0].name,
 							)
-						:	new Date().getFullYear(),
+							: new Date().getFullYear(),
 					rating: (film.rating as number) || 0,
 					quality: (film.quality as string) || "HD",
 					episode: formatEpisode(film),
-					backdrop:
-						(film.thumb_url as string),
+					backdrop: (film.thumb_url as string),
 					genre:
-						(film.genres as Array<{name: string}>)?.map(
+						(film.genres as Array<{ name: string }>)?.map(
 							(g) => g.name,
 						) || [],
+					country: (film.countries as Array<{ name: string }>)?.[0]?.name || "",
 					duration: (film.time as string) || "N/A",
 					views: (film.views as number)?.toString() || "0",
 					language: (film.language as string) || "Vietsub",
@@ -145,8 +158,8 @@ export default function SearchPage() {
 	useEffect(() => {
 		let filtered = [...movies];
 
-		if (selectedQuality !== "Tất cả") {
-			filtered = filtered.filter((m) => m.quality === selectedQuality);
+		if (selectedCountry !== "Tất cả") {
+			filtered = filtered.filter((m) => m.country === selectedCountry);
 		}
 
 		if (selectedYear !== "Tất cả") {
@@ -176,7 +189,7 @@ export default function SearchPage() {
 		});
 
 		setFilteredMovies(filtered);
-	}, [movies, selectedSort, selectedQuality, selectedYear, selectedGenres]);
+	}, [movies, selectedSort, selectedCountry, selectedYear, selectedGenres]);
 
 	// Search on initial load if query exists
 	useEffect(() => {
@@ -205,13 +218,17 @@ export default function SearchPage() {
 		setSelectedGenres((prev) =>
 			prev.includes(genre) ?
 				prev.filter((g) => g !== genre)
-			:	[...prev, genre],
+				: [...prev, genre],
 		);
 	};
 
-	// Get unique genres from results
+	// Get unique genres & countries from results
 	const availableGenres = Array.from(
 		new Set(movies.flatMap((m) => m.genre)),
+	).sort();
+
+	const availableCountries = Array.from(
+		new Set(movies.map((m) => m.country).filter(Boolean)),
 	).sort();
 
 	return (
@@ -260,7 +277,7 @@ export default function SearchPage() {
 								>
 									{isLoading ?
 										<Loader2 className='h-4 w-4 animate-spin' />
-									:	"Tìm"}
+										: "Tìm"}
 								</Button>
 							</div>
 						</div>
@@ -279,17 +296,17 @@ export default function SearchPage() {
 								>
 									<Filter className='h-4 w-4 mr-2' />
 									Bộ lọc
-									{(selectedQuality !== "Tất cả" ||
+									{(selectedCountry !== "Tất cả" ||
 										selectedYear !== "Tất cả" ||
 										selectedGenres.length > 0) && (
-										<Badge className='ml-2 bg-[#8ae4ff] text-black text-xs px-1.5 py-0 border-0'>
-											{(selectedQuality !== "Tất cả" ? 1
-											:	0) +
-												(selectedYear !== "Tất cả" ? 1
-												:	0) +
-												selectedGenres.length}
-										</Badge>
-									)}
+											<Badge className='ml-2 bg-[#8ae4ff] text-black text-xs px-1.5 py-0 border-0'>
+												{(selectedCountry !== "Tất cả" ? 1
+													: 0) +
+													(selectedYear !== "Tất cả" ? 1
+														: 0) +
+													selectedGenres.length}
+											</Badge>
+										)}
 								</Button>
 
 								{/* Sort Options */}
@@ -305,14 +322,13 @@ export default function SearchPage() {
 													)
 												}
 												variant='outline'
-												className={`border-white/10 rounded-lg transition-all ${
-													(
+												className={`border-white/10 rounded-lg transition-all ${(
 														selectedSort ===
 														option.value
 													) ?
 														"bg-[#8ae4ff]/20 border-[#8ae4ff]/50 text-[#8ae4ff]"
-													:	"bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
-												}`}
+														: "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+													}`}
 											>
 												<Icon className='h-4 w-4 mr-2' />
 												{option.label}
@@ -345,30 +361,29 @@ export default function SearchPage() {
 						{showFilters && (
 							<div className='p-4 bg-white/5 border border-white/10 rounded-xl mb-4 animate-in slide-in-from-top-2'>
 								<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-									{/* Quality Filter */}
+									{/* Country Filter */}
 									<div>
 										<p className='text-sm font-semibold text-gray-400 mb-2'>
-											Chất lượng
+											Quốc gia
 										</p>
 										<div className='flex flex-wrap gap-2'>
-											{QUALITY_OPTIONS.map((quality) => (
+											{["Tất cả", ...availableCountries].map((country) => (
 												<Badge
-													key={quality}
+													key={`country-${country}`}
 													onClick={() =>
-														setSelectedQuality(
-															quality,
+														setSelectedCountry(
+															country as string,
 														)
 													}
-													className={`cursor-pointer transition-all ${
-														(
-															selectedQuality ===
-															quality
+													className={`cursor-pointer transition-all ${(
+															selectedCountry ===
+															country
 														) ?
 															"bg-[#8ae4ff] text-black border-[#8ae4ff]"
-														:	"bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
-													}`}
+															: "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+														}`}
 												>
-													{quality}
+													{country}
 												</Badge>
 											))}
 										</div>
@@ -379,18 +394,17 @@ export default function SearchPage() {
 										<p className='text-sm font-semibold text-gray-400 mb-2'>
 											Năm phát hành
 										</p>
-										<div className='flex flex-wrap gap-2'>
-											{YEAR_OPTIONS.map((year) => (
+										<div className='flex flex-wrap gap-2 max-h-32 overflow-y-auto'>
+											{yearOptions.map((year) => (
 												<Badge
 													key={year}
 													onClick={() =>
 														setSelectedYear(year)
 													}
-													className={`cursor-pointer transition-all ${
-														selectedYear === year ?
+													className={`cursor-pointer transition-all ${selectedYear === year ?
 															"bg-[#8ae4ff] text-black border-[#8ae4ff]"
-														:	"bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
-													}`}
+															: "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+														}`}
 												>
 													{year}
 												</Badge>
@@ -410,15 +424,14 @@ export default function SearchPage() {
 													onClick={() =>
 														toggleGenre(genre)
 													}
-													className={`cursor-pointer transition-all ${
-														(
+													className={`cursor-pointer transition-all ${(
 															selectedGenres.includes(
 																genre,
 															)
 														) ?
 															"bg-[#8ae4ff] text-black border-[#8ae4ff]"
-														:	"bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
-													}`}
+															: "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+														}`}
 												>
 													{genre}
 												</Badge>
@@ -428,22 +441,22 @@ export default function SearchPage() {
 								</div>
 
 								{/* Clear Filters */}
-								{(selectedQuality !== "Tất cả" ||
+								{(selectedCountry !== "Tất cả" ||
 									selectedYear !== "Tất cả" ||
 									selectedGenres.length > 0) && (
-									<Button
-										onClick={() => {
-											setSelectedQuality("Tất cả");
-											setSelectedYear("Tất cả");
-											setSelectedGenres([]);
-										}}
-										variant='ghost'
-										className='mt-3 text-[#8ae4ff] hover:text-[#8ae4ff]/80 hover:bg-[#8ae4ff]/10'
-									>
-										<X className='h-4 w-4 mr-2' />
-										Xóa bộ lọc
-									</Button>
-								)}
+										<Button
+											onClick={() => {
+												setSelectedCountry("Tất cả");
+												setSelectedYear("Tất cả");
+												setSelectedGenres([]);
+											}}
+											variant='ghost'
+											className='mt-3 text-[#8ae4ff] hover:text-[#8ae4ff]/80 hover:bg-[#8ae4ff]/10'
+										>
+											<X className='h-4 w-4 mr-2' />
+											Xóa bộ lọc
+										</Button>
+									)}
 							</div>
 						)}
 					</div>
@@ -456,41 +469,41 @@ export default function SearchPage() {
 							<Loader2 className='h-12 w-12 text-[#8ae4ff] animate-spin mb-4' />
 							<p className='text-gray-400'>Đang tìm kiếm...</p>
 						</div>
-					: filteredMovies.length > 0 ?
-						<div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4'>
-							{filteredMovies.map((movie) => (
-								<MovieCard key={movie.id} movie={movie} />
-							))}
-						</div>
-					: hasSearched ?
-						<div className='flex flex-col items-center justify-center py-20'>
-							<div className='p-6 bg-white/5 rounded-2xl border border-white/10 mb-4'>
-								<Film className='h-16 w-16 text-gray-600 mx-auto' />
+						: filteredMovies.length > 0 ?
+							<div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4'>
+								{filteredMovies.map((movie) => (
+									<MovieCard key={movie.id} movie={movie} />
+								))}
 							</div>
-							<h3 className='text-xl font-semibold mb-2'>
-								Không tìm thấy kết quả
-							</h3>
-							<p className='text-gray-400 text-center max-w-md'>
-								Không tìm thấy phim nào phù hợp với từ khóa
-								&ldquo;
-								<span className='text-white font-medium'>
-									{searchQuery}
-								</span>
-								&rdquo;. Vui lòng thử lại với từ khóa khác.
-							</p>
-						</div>
-					:	<div className='flex flex-col items-center justify-center py-20'>
-							<div className='p-6 bg-gradient-to-br from-[#8ae4ff]/20 to-[#8ae4ff]/5 rounded-2xl border border-[#8ae4ff]/20 mb-4'>
-								<Search className='h-16 w-16 text-[#8ae4ff] mx-auto' />
-							</div>
-							<h3 className='text-xl font-semibold mb-2'>
-								Bắt đầu tìm kiếm
-							</h3>
-							<p className='text-gray-400 text-center max-w-md'>
-								Nhập tên phim, diễn viên hoặc đạo diễn để tìm
-								kiếm phim yêu thích của bạn
-							</p>
-						</div>
+							: hasSearched ?
+								<div className='flex flex-col items-center justify-center py-20'>
+									<div className='p-6 bg-white/5 rounded-2xl border border-white/10 mb-4'>
+										<Film className='h-16 w-16 text-gray-600 mx-auto' />
+									</div>
+									<h3 className='text-xl font-semibold mb-2'>
+										Không tìm thấy kết quả
+									</h3>
+									<p className='text-gray-400 text-center max-w-md'>
+										Không tìm thấy phim nào phù hợp với từ khóa
+										&ldquo;
+										<span className='text-white font-medium'>
+											{searchQuery}
+										</span>
+										&rdquo;. Vui lòng thử lại với từ khóa khác.
+									</p>
+								</div>
+								: <div className='flex flex-col items-center justify-center py-20'>
+									<div className='p-6 bg-gradient-to-br from-[#8ae4ff]/20 to-[#8ae4ff]/5 rounded-2xl border border-[#8ae4ff]/20 mb-4'>
+										<Search className='h-16 w-16 text-[#8ae4ff] mx-auto' />
+									</div>
+									<h3 className='text-xl font-semibold mb-2'>
+										Bắt đầu tìm kiếm
+									</h3>
+									<p className='text-gray-400 text-center max-w-md'>
+										Nhập tên phim, diễn viên hoặc đạo diễn để tìm
+										kiếm phim yêu thích của bạn
+									</p>
+								</div>
 					}
 				</div>
 			</div>

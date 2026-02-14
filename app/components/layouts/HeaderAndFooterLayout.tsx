@@ -45,9 +45,10 @@ interface NavDropdownProps {
 	label: string;
 	items: string[];
 	icon?: React.ReactNode;
+	basePath?: string;
 }
 
-function NavDropdown({ label, items, icon }: NavDropdownProps) {
+function NavDropdown({ label, items, icon, basePath = "/the-loai" }: NavDropdownProps) {
 	const router = useRouter();
 	return (
 		<DropdownMenu>
@@ -69,7 +70,7 @@ function NavDropdown({ label, items, icon }: NavDropdownProps) {
 							className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer px-3 py-2'
 							onClick={() =>
 								router.push(
-									`/the-loai/${item.toLowerCase().replace(/\s/g, "-")}`,
+									`${basePath}/${item.toLowerCase().replace(/\s/g, "-")}`,
 								)
 							}
 						>
@@ -203,6 +204,7 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 								<NavDropdown
 									label='Quốc Gia'
 									items={countries}
+									basePath='/quoc-gia'
 								/>
 							</nav>
 
@@ -652,9 +654,11 @@ function MobileNavLink({
 	);
 }
 
-function MobileNavSection({ title, items }: { title: string; items: string[] }) {
+function MobileNavSection({ title, items, basePath }: { title: string; items: string[]; basePath?: string }) {
 	const router = useRouter();
 	const [isOpen, setIsOpen] = useState(false);
+
+	const resolvedBasePath = basePath || (title === "Quốc Gia" ? "/quoc-gia" : "/the-loai");
 
 	return (
 		<div>
@@ -677,7 +681,7 @@ function MobileNavSection({ title, items }: { title: string; items: string[] }) 
 							key={item}
 							onClick={() =>
 								router.push(
-									`/${title.toLowerCase().replace(/\s/g, "-")}/${item.toLowerCase().replace(/\s/g, "-")}`,
+									`${resolvedBasePath}/${item.toLowerCase().replace(/\s/g, "-")}`,
 								)
 							}
 							className='block w-full text-left px-3 py-1.5 text-sm text-gray-500 hover:text-gray-300 rounded transition-colors'
