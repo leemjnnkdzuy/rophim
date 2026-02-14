@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { icon } from "@/app/assets";
 import { Input } from "@/app/components/ui/input";
+import { SearchWithSuggestions } from "@/app/components/common/SearchSuggestions";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import {
@@ -143,7 +144,6 @@ function NavLink({ href, label, icon, badge }: NavLinkProps) {
 export default function HeaderLayout({ children }: { children: React.ReactNode }) {
 	const router = useRouter();
 	const [searchQuery, setSearchQuery] = useState("");
-	const [isSearchFocused, setIsSearchFocused] = useState(false);
 	const [genres, setGenres] = useState<string[]>(DEFAULT_GENRES);
 	const { isAuthenticated, user, logout } = useAuth();
 
@@ -224,34 +224,7 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 							</nav>
 
 							{/* Search Bar - Desktop */}
-							<div
-								className={`hidden md:flex relative max-w-md w-64 transition-all duration-300 ${isSearchFocused ? "w-80" : ""}`}
-							>
-								<div
-									className={`relative w-full group ${isSearchFocused ? "ring-1 ring-[#8ae4ff]/50" : ""} rounded-full`}
-								>
-									<Search className='absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 group-hover:text-gray-400 transition-colors' />
-									<Input
-										type='text'
-										placeholder='Tìm kiếm phim...'
-										value={searchQuery}
-										onChange={(e) =>
-											setSearchQuery(e.target.value)
-										}
-										onKeyDown={handleSearchKeyDown}
-										onFocus={() => setIsSearchFocused(true)}
-										onBlur={() => setIsSearchFocused(false)}
-										className='w-full pl-10 pr-20 h-9 bg-white/5 border-white/10 rounded-full text-sm text-white placeholder:text-gray-500 focus-visible:ring-[#8ae4ff]/30 hover:bg-white/8 transition-colors'
-									/>
-									<Button
-										onClick={handleSearch}
-										disabled={!searchQuery.trim()}
-										className='absolute right-1 top-1/2 -translate-y-1/2 h-7 px-4 bg-[#8ae4ff] hover:bg-[#8ae4ff]/90 text-black rounded-full font-semibold text-xs shadow-lg shadow-[#8ae4ff]/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed'
-									>
-										Tìm
-									</Button>
-								</div>
-							</div>
+							<SearchWithSuggestions />
 						</div>
 
 						{/* Right Side */}
