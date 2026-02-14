@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
 				user.avatar ?
 					`data:${user.avatar.mime};base64,${user.avatar.data}`
 				:	null,
+			role: user.role || "user",
 			isVerified: user.isVerified,
 			createdAt: user.createdAt,
 		};

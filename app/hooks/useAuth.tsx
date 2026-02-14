@@ -7,6 +7,7 @@ interface UserInfo {
 	username: string;
 	email: string;
 	avatar?: string;
+	role?: "user" | "admin";
 }
 
 export function useAuth({enabled = true}: {enabled?: boolean} = {}): {

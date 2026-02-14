@@ -25,6 +25,7 @@ import {
 	ChevronUp,
 	Server,
 } from "lucide-react";
+import CommentSection from "@/app/components/common/CommentSection";
 import {
 	fetchFilmDetail,
 	FilmDetail,
@@ -647,6 +648,11 @@ export default function WatchPage({
 						</div>
 					</div>
 				</div>
+			</div>
+
+			{/* Comment Section */}
+			<div className='max-w-[1400px] mx-auto px-4 md:px-8 pb-12'>
+				<CommentSection filmSlug={slug} />
 			</div>
 
 			{/* Rating Popup */}

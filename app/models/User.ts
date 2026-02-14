@@ -17,6 +17,7 @@ export interface IUser extends Document {
 		mime: string;
 		data: string;
 	};
+	role: "user" | "admin";
 	savedFilms: string[];
 	watchHistory: IWatchHistoryItem[];
 	ratings?: Array<{
@@ -67,6 +68,11 @@ const userSchema = new Schema<IUser>(
 				type: String,
 				default: "",
 			},
+		},
+		role: {
+			type: String,
+			enum: ["user", "admin"],
+			default: "user",
 		},
 		savedFilms: {
 			type: [String],

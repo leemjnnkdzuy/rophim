@@ -17,14 +17,13 @@ import {
 	User,
 	Calendar,
 	Globe,
-	Tag,
-	Info,
 	Tv,
 	CheckCircle2,
 	AlertCircle,
 	Eye,
 	Volume2,
 } from "lucide-react";
+import CommentSection from "@/app/components/common/CommentSection";
 import {
 	fetchFilmDetail,
 	FilmDetail,
@@ -594,7 +593,6 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 						{/* Description */}
 						<div className='space-y-3'>
 							<h3 className='text-base font-bold text-white flex items-center gap-2 uppercase tracking-wide'>
-								<Info className='h-4 w-4 text-primary' />
 								Nội dung phim
 							</h3>
 							<div className='relative'>
@@ -629,7 +627,6 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 						{/* Info Details */}
 						<div className='space-y-4'>
 							<h3 className='text-base font-bold text-white flex items-center gap-2 uppercase tracking-wide'>
-								<Tag className='h-4 w-4 text-primary' />
 								Thông tin chi tiết
 							</h3>
 							<div className='space-y-3'>
@@ -680,28 +677,9 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 
 						{/* Cast & Director */}
 						<div className='space-y-5'>
-							{/* Director */}
-							{film.director && (
-								<div className='space-y-3'>
-									<h3 className='text-base font-bold text-white flex items-center gap-2 uppercase tracking-wide'>
-										<Film className='h-4 w-4 text-primary' />
-										Đạo diễn
-									</h3>
-									<div className='inline-flex items-center gap-3 p-2.5 bg-white/5 border border-white/5 rounded-xl w-full'>
-										<div className='w-9 h-9 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0'>
-											<Star className='h-3.5 w-3.5 text-amber-400' />
-										</div>
-										<span className='text-sm text-gray-300 font-medium truncate'>
-											{film.director}
-										</span>
-									</div>
-								</div>
-							)}
-
 							{/* Cast List */}
 							<div className='space-y-3'>
 								<h3 className='text-base font-bold text-white flex items-center gap-2 uppercase tracking-wide'>
-									<User className='h-4 w-4 text-primary' />
 									Diễn viên
 								</h3>
 								{film.casts ?
@@ -807,6 +785,11 @@ export default function InfoPage({identifier}: {identifier?: string}) {
 								</p>
 							</div>
 						}
+
+						{/* Comment Section */}
+						<div className='mt-8'>
+							<CommentSection filmSlug={slug} />
+						</div>
 					</div>
 				</div>
 			</section>
