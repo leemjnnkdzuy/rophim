@@ -1,11 +1,19 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
-import {icon} from "@/app/assets";
+import { icon } from "@/app/assets";
 
 export function LoadingScreen() {
+	useEffect(() => {
+		document.body.style.overflow = "hidden";
+		return () => {
+			document.body.style.overflow = "";
+		};
+	}, []);
+
 	return (
-		<div className='min-h-screen bg-gradient-to-br from-neutral-950 to-neutral-900 flex items-center justify-center'>
+		<div className='fixed inset-0 z-50 bg-gradient-to-br from-neutral-950 to-neutral-900 flex items-center justify-center'>
 			<div className='flex flex-col items-center gap-4'>
 				{/* Spinning Loader */}
 				<div className='relative w-20 h-20'>

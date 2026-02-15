@@ -420,11 +420,11 @@ export default function SeriesPage() {
 
             const data: SeriesPageData = response.data;
 
-            setTrendingSeries(data.trendingSeries.map(mapFilmToMovie));
-            setNewestByYear(data.newestByYear.map(mapFilmToMovie));
-            setRecentlyUploaded(data.recentlyUploaded.map(mapFilmToMovie));
-            setAllSeries(data.allSeries.map(mapFilmToMovie));
-            setPagination(data.pagination);
+            setTrendingSeries((data.trendingSeries || []).map(mapFilmToMovie));
+            setNewestByYear((data.newestByYear || []).map(mapFilmToMovie));
+            setRecentlyUploaded((data.recentlyUploaded || []).map(mapFilmToMovie));
+            setAllSeries((data.allSeries || []).map(mapFilmToMovie));
+            setPagination(data.pagination || { page: 1, limit: 24, totalCount: 0, totalPages: 1, hasNext: false, hasPrev: false });
         } catch (error) {
             console.error("Failed to load series page data:", error);
         } finally {

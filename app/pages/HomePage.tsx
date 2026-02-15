@@ -40,6 +40,7 @@ export default function HomePage() {
 	const router = useRouter();
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const [isLoading, setIsLoading] = useState(true);
+	const [hasError, setHasError] = useState(false);
 	const [featuredMoviesData, setFeaturedMoviesData] = useState<
 		FeaturedMovie[]
 	>([]);
@@ -91,6 +92,7 @@ export default function HomePage() {
 	useEffect(() => {
 		const loadMovies = async () => {
 			try {
+				setHasError(false);
 				const data = await fetchLatestFilmsFromDB();
 
 				const formatEpisode = (item: MovieItemWithStats) => {
@@ -201,13 +203,14 @@ export default function HomePage() {
 						cartoon,
 						genres,
 					});
-					setIsLoading(false);
 				}
 			} catch (error) {
 				console.error(
 					"Failed to load new movies for hero section",
 					error,
 				);
+				setHasError(true);
+			} finally {
 				setIsLoading(false);
 			}
 		};
@@ -216,6 +219,7 @@ export default function HomePage() {
 
 	// Auto-advance slide every 5 seconds
 	useEffect(() => {
+		if (featuredMoviesData.length === 0) return;
 		const timer = setInterval(() => {
 			setCurrentSlide((prev) => (prev + 1) % featuredMoviesData.length);
 		}, 5000);
@@ -228,169 +232,185 @@ export default function HomePage() {
 		return <LoadingScreen />;
 	}
 
-	if (!featuredMovie) return null;
+	if (hasError) {
+		return (
+			<div className='min-h-[60vh] flex flex-col items-center justify-center gap-4'>
+				<Film className='h-16 w-16 text-gray-600' />
+				<h2 className='text-xl font-semibold text-white'>Không thể tải dữ liệu</h2>
+				<p className='text-gray-400 text-sm'>Đã xảy ra lỗi khi tải dữ liệu phim. Vui lòng thử lại.</p>
+				<Button
+					onClick={() => window.location.reload()}
+					className='bg-primary hover:bg-primary/90 text-black rounded-full px-6 font-semibold cursor-pointer'
+				>
+					Thử lại
+				</Button>
+			</div>
+		);
+	}
 
 	return (
 		<>
-			{/* Hero Section */}
-			<section className='relative overflow-hidden transition-all duration-500 ease-in-out h-[1000px] lg:h-[700px] flex items-center'>
-				{/* Background */}
-				<div className='absolute inset-0 bg-neutral-950' />
-				<div className='absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(138,228,255,0.15),transparent)]' />
+			{/* Hero Section - only show if we have featured movies */}
+			{featuredMovie && (
+				<section className='relative overflow-hidden transition-all duration-500 ease-in-out h-[1000px] lg:h-[700px] flex items-center'>
+					{/* Background */}
+					<div className='absolute inset-0 bg-neutral-950' />
+					<div className='absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(138,228,255,0.15),transparent)]' />
 
-				{/* Dynamic Background Image with Overlay */}
-				{featuredMovie.poster && (
-					<div className='absolute inset-0 opacity-20'>
-						<Image
-							src={featuredMovie.poster}
-							alt='Backdrop'
-							fill
-							sizes='100vw'
-							unoptimized
-							className='object-cover'
-						/>
-						<div className='absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/50 to-transparent' />
-					</div>
-				)}
-
-				<div className='relative w-full px-4 lg:px-32 py-8 lg:py-16'>
-					<div className='grid lg:grid-cols-[1fr_auto] gap-8 lg:gap-12 items-center'>
-						{/* Hero Info Container */}
-						<div className='flex flex-col gap-6 max-w-2xl'>
-							{/* Animating Content */}
-							<div
-								className='space-y-5 animate-in fade-in slide-in-from-left-5 duration-500'
-								key={featuredMovie.id}
-							>
-								<div className='flex items-center gap-3 flex-wrap'>
-									<Badge className='bg-primary text-black text-xs font-bold border-0 px-3 py-1'>
-										<Flame className='h-3 w-3 mr-1' />
-										PHIM VỪA CẬP NHẬT
-									</Badge>
-									<Badge
-										variant='outline'
-										className='border-white/20 text-gray-400 text-xs px-3 py-1'
-									>
-										{featuredMovie.year}
-									</Badge>
-									{featuredMovie.rating > 0 && (
-										<Badge
-											variant='outline'
-											className='border-primary/30 text-primary text-xs px-3 py-1'
-										>
-											<Star className='h-3 w-3 mr-1 fill-primary' />
-											{featuredMovie.rating}
-										</Badge>
-									)}
-								</div>
-
-								<h1 className='text-4xl lg:text-6xl font-black text-white leading-tight'>
-									{featuredMovie.title}
-								</h1>
-
-								<p className='text-sm text-primary/80 font-medium tracking-wide'>
-									{featuredMovie.originalTitle}
-								</p>
-
-								<div className='flex items-center gap-4 text-sm text-gray-400 flex-wrap'>
-									<span className='flex items-center gap-1.5'>
-										<Clock className='h-4 w-4' />
-										{featuredMovie.duration}
-									</span>
-									<span className='flex items-center gap-1.5'>
-										<Eye className='h-4 w-4' />
-										{featuredMovie.views} lượt xem
-									</span>
-									<span className='text-primary font-medium'>
-										{featuredMovie.episode}
-									</span>
-								</div>
-
-								<div className='flex flex-wrap gap-2'>
-									{featuredMovie.genre.map((g) => (
-										<Badge
-											key={g}
-											variant='outline'
-											className='border-white/10 text-gray-300 hover:bg-white/5 transition-colors text-xs'
-										>
-											{g}
-										</Badge>
-									))}
-								</div>
-
-								<p className='text-gray-400 leading-relaxed text-sm lg:text-base line-clamp-3'>
-									{featuredMovie.description}
-								</p>
-
-								<div className='flex items-center gap-3 pt-2'>
-									<Button
-										size='lg'
-										onClick={() =>
-											router.push(
-												`/info/${featuredMovie.id}`,
-											)
-										}
-										className='bg-primary hover:bg-primary/90 text-black rounded-full px-8 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 h-12 cursor-pointer'
-									>
-										<Play
-											className='h-5 w-5 mr-2'
-											fill='black'
-										/>
-										Xem Ngay
-									</Button>
-								</div>
-							</div>
+					{/* Dynamic Background Image with Overlay */}
+					{featuredMovie.poster && (
+						<div className='absolute inset-0 opacity-20'>
+							<Image
+								src={featuredMovie.poster}
+								alt='Backdrop'
+								fill
+								sizes='100vw'
+								unoptimized
+								className='object-cover'
+							/>
+							<div className='absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/50 to-transparent' />
 						</div>
+					)}
 
-						{/* Hero Poster */}
-						<div
-							className='hidden lg:block relative animate-in fade-in duration-1000'
-							key={`poster-${featuredMovie.id}`}
-						>
-							<div className='absolute -inset-4 bg-primary/20 rounded-2xl blur-2xl' />
-							<div className='relative w-[300px] aspect-[2/3] rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-primary/10'>
-								{featuredMovie.backdrop ?
-									<Image
-										src={featuredMovie.backdrop}
-										alt={featuredMovie.title}
-										fill
-										sizes='300px'
-										unoptimized
-										className='object-cover'
-									/>
-									: <div className='absolute inset-0 bg-neutral-900/60 flex items-center justify-center'>
-										<div className='text-center'>
-											<Film className='h-16 w-16 text-white/20 mx-auto mb-3' />
-											<p className='text-white/40 text-sm font-medium'>
-												{featuredMovie.title}
-											</p>
-										</div>
+					<div className='relative w-full px-4 lg:px-32 py-8 lg:py-16'>
+						<div className='grid lg:grid-cols-[1fr_auto] gap-8 lg:gap-12 items-center'>
+							{/* Hero Info Container */}
+							<div className='flex flex-col gap-6 max-w-2xl'>
+								{/* Animating Content */}
+								<div
+									className='space-y-5 animate-in fade-in slide-in-from-left-5 duration-500'
+									key={featuredMovie.id}
+								>
+									<div className='flex items-center gap-3 flex-wrap'>
+										<Badge className='bg-primary text-black text-xs font-bold border-0 px-3 py-1'>
+											<Flame className='h-3 w-3 mr-1' />
+											PHIM VỪA CẬP NHẬT
+										</Badge>
+										<Badge
+											variant='outline'
+											className='border-white/20 text-gray-400 text-xs px-3 py-1'
+										>
+											{featuredMovie.year}
+										</Badge>
+										{featuredMovie.rating > 0 && (
+											<Badge
+												variant='outline'
+												className='border-primary/30 text-primary text-xs px-3 py-1'
+											>
+												<Star className='h-3 w-3 mr-1 fill-primary' />
+												{featuredMovie.rating}
+											</Badge>
+										)}
 									</div>
-								}
-								<div className='absolute top-3 left-3'>
-									<Badge className='bg-primary/90 text-black font-bold border-0 px-2 py-1 text-xs backdrop-blur-sm'>
-										{featuredMovie.quality}
-									</Badge>
+
+									<h1 className='text-4xl lg:text-6xl font-black text-white leading-tight'>
+										{featuredMovie.title}
+									</h1>
+
+									<p className='text-sm text-primary/80 font-medium tracking-wide'>
+										{featuredMovie.originalTitle}
+									</p>
+
+									<div className='flex items-center gap-4 text-sm text-gray-400 flex-wrap'>
+										<span className='flex items-center gap-1.5'>
+											<Clock className='h-4 w-4' />
+											{featuredMovie.duration}
+										</span>
+										<span className='flex items-center gap-1.5'>
+											<Eye className='h-4 w-4' />
+											{featuredMovie.views} lượt xem
+										</span>
+										<span className='text-primary font-medium'>
+											{featuredMovie.episode}
+										</span>
+									</div>
+
+									<div className='flex flex-wrap gap-2'>
+										{featuredMovie.genre.map((g) => (
+											<Badge
+												key={g}
+												variant='outline'
+												className='border-white/10 text-gray-300 hover:bg-white/5 transition-colors text-xs'
+											>
+												{g}
+											</Badge>
+										))}
+									</div>
+
+									<p className='text-gray-400 leading-relaxed text-sm lg:text-base line-clamp-3'>
+										{featuredMovie.description}
+									</p>
+
+									<div className='flex items-center gap-3 pt-2'>
+										<Button
+											size='lg'
+											onClick={() =>
+												router.push(
+													`/info/${featuredMovie.id}`,
+												)
+											}
+											className='bg-primary hover:bg-primary/90 text-black rounded-full px-8 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 h-12 cursor-pointer'
+										>
+											<Play
+												className='h-5 w-5 mr-2'
+												fill='black'
+											/>
+											Xem Ngay
+										</Button>
+									</div>
+								</div>
+							</div>
+
+							{/* Hero Poster */}
+							<div
+								className='hidden lg:block relative animate-in fade-in duration-1000'
+								key={`poster-${featuredMovie.id}`}
+							>
+								<div className='absolute -inset-4 bg-primary/20 rounded-2xl blur-2xl' />
+								<div className='relative w-[300px] aspect-[2/3] rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-primary/10'>
+									{featuredMovie.backdrop ?
+										<Image
+											src={featuredMovie.backdrop}
+											alt={featuredMovie.title}
+											fill
+											sizes='300px'
+											unoptimized
+											className='object-cover'
+										/>
+										: <div className='absolute inset-0 bg-neutral-900/60 flex items-center justify-center'>
+											<div className='text-center'>
+												<Film className='h-16 w-16 text-white/20 mx-auto mb-3' />
+												<p className='text-white/40 text-sm font-medium'>
+													{featuredMovie.title}
+												</p>
+											</div>
+										</div>
+									}
+									<div className='absolute top-3 left-3'>
+										<Badge className='bg-primary/90 text-black font-bold border-0 px-2 py-1 text-xs backdrop-blur-sm'>
+											{featuredMovie.quality}
+										</Badge>
+									</div>
 								</div>
 							</div>
 						</div>
 					</div>
-				</div>
-				{/* Navigation Dots - Centered Bottom */}
-				<div className='absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20'>
-					{featuredMoviesData.map((_, index) => (
-						<button
-							key={index}
-							onClick={() => setCurrentSlide(index)}
-							className={`h-1.5 rounded-full transition-all duration-300 ${currentSlide === index ? "w-8 bg-primary" : (
+					{/* Navigation Dots - Centered Bottom */}
+					<div className='absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20'>
+						{featuredMoviesData.map((_, index) => (
+							<button
+								key={index}
+								onClick={() => setCurrentSlide(index)}
+								className={`h-1.5 rounded-full transition-all duration-300 ${currentSlide === index ? "w-8 bg-primary" : (
 									"w-2 bg-white/20 hover:bg-white/40"
 								)
-								}`}
-							aria-label={`Go to slide ${index + 1}`}
-						/>
-					))}
-				</div>
-			</section>
+									}`}
+								aria-label={`Go to slide ${index + 1}`}
+							/>
+						))}
+					</div>
+				</section>
+			)}
 
 			{/* Trending Section */}
 			<section className='w-full px-4 lg:px-32 py-10'>

@@ -387,11 +387,11 @@ export default function MoviePage() {
 
             const data: MoviePageData = response.data;
 
-            setTrendingMovies(data.trendingMovies.map(mapFilmToMovie));
-            setNewestByYear(data.newestByYear.map(mapFilmToMovie));
-            setRecentlyUploaded(data.recentlyUploaded.map(mapFilmToMovie));
-            setAllMovies(data.allMovies.map(mapFilmToMovie));
-            setPagination(data.pagination);
+            setTrendingMovies((data.trendingMovies || []).map(mapFilmToMovie));
+            setNewestByYear((data.newestByYear || []).map(mapFilmToMovie));
+            setRecentlyUploaded((data.recentlyUploaded || []).map(mapFilmToMovie));
+            setAllMovies((data.allMovies || []).map(mapFilmToMovie));
+            setPagination(data.pagination || { page: 1, limit: 24, totalCount: 0, totalPages: 1, hasNext: false, hasPrev: false });
         } catch (error) {
             console.error("Failed to load movie page data:", error);
         } finally {
