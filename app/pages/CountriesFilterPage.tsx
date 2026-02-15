@@ -9,15 +9,17 @@ import {
     X,
     Loader2,
     Film,
-    Globe,
     TrendingUp,
     Sparkles,
     Clock,
+    Tag,
     ChevronLeft,
     ChevronRight,
     ChevronsLeft,
     ChevronsRight,
     MapPin,
+    Calendar,
+    Layers,
 } from "lucide-react";
 import api from "@/app/utils/axios";
 import { Movie } from "@/app/types/movie";
@@ -108,8 +110,8 @@ function mapFilmToMovie(film: FilmRaw): Movie {
         rating: film.rating || 0,
         quality: film.quality || "HD",
         episode: formatEpisode(film),
-        backdrop: film.thumb_url,
-        poster: film.poster_url,
+        backdrop: film.poster_url,
+        poster: film.thumb_url,
         genre: film.genres?.map((g) => g.name) || [],
         country: film.countries?.[0]?.name || "",
         duration: film.time || "N/A",
@@ -202,8 +204,8 @@ function PaginationControls({
                             onClick={() => onPageChange(page)}
                             disabled={isLoading}
                             className={`h-9 w-9 border-white/10 transition-all cursor-pointer ${currentPage === page
-                                    ? "bg-primary text-black border-primary font-bold shadow-lg shadow-primary/20"
-                                    : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+                                ? "bg-primary text-black border-primary font-bold shadow-lg shadow-primary/20"
+                                : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
                                 }`}
                         >
                             {page}
@@ -268,27 +270,41 @@ export default function CountriesFilterPage({
     // Filter states
     const [showFilters, setShowFilters] = useState(false);
     const [selectedSort, setSelectedSort] = useState("views");
-    const [selectedYear, setSelectedYear] = useState("Tất cả");
+
+    // 4 Filters: Formats, Genres, Countries, Years
+    const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
     const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+    const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+    const [selectedYears, setSelectedYears] = useState<string[]>([]);
 
     // Available filter options
-    const [yearOptions, setYearOptions] = useState<string[]>([]);
+    const [formatOptions, setFormatOptions] = useState<string[]>([]);
     const [genreOptions, setGenreOptions] = useState<string[]>([]);
+    const [countryOptions, setCountryOptions] = useState<string[]>([]);
+    const [yearOptions, setYearOptions] = useState<string[]>([]);
 
     // Fetch available filter options on mount
     useEffect(() => {
         const fetchOptions = async () => {
             try {
-                const [yearsRes, genresRes] = await Promise.all([
-                    api.get("/years"),
+                const [formatsRes, genresRes, countriesRes, yearsRes] = await Promise.all([
+                    api.get("/formats"),
                     api.get("/genres"),
+                    api.get("/countries"),
+                    api.get("/years"),
                 ]);
 
-                if (Array.isArray(yearsRes.data)) {
-                    setYearOptions(["Tất cả", ...yearsRes.data]);
+                if (Array.isArray(formatsRes.data)) {
+                    setFormatOptions(formatsRes.data.filter(Boolean));
                 }
                 if (Array.isArray(genresRes.data)) {
                     setGenreOptions(genresRes.data.filter(Boolean));
+                }
+                if (Array.isArray(countriesRes.data)) {
+                    setCountryOptions(countriesRes.data.filter(Boolean));
+                }
+                if (Array.isArray(yearsRes.data)) {
+                    setYearOptions(yearsRes.data);
                 }
             } catch {
                 console.error("Failed to fetch filter options");
@@ -311,34 +327,26 @@ export default function CountriesFilterPage({
                     page,
                     limit: 24,
                     sort: selectedSort,
-                    country: displayValue,
+                    // Main context is country, allow filtering by multiple other countries too if needed
+                    country: [displayValue, ...selectedCountries].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(","),
                 };
 
-                // Apply additional filters
-                if (selectedYear !== "Tất cả") {
-                    params.year = selectedYear;
-                }
-                // Genre filter is sent server-side via the first selected genre
-                // Additional genres are filtered client-side
                 if (selectedGenres.length > 0) {
-                    params.genre = selectedGenres[0];
+                    params.genre = selectedGenres.join(",");
+                }
+                if (selectedYears.length > 0) {
+                    params.year = selectedYears.join(",");
+                }
+                if (selectedFormats.length > 0) {
+                    params.format = selectedFormats.join(",");
                 }
 
                 const response = await api.get("/films/filter", { params });
                 const data = response.data;
 
-                let mappedMovies: Movie[] = (data.films || []).map(
+                const mappedMovies: Movie[] = (data.films || []).map(
                     (film: FilmRaw) => mapFilmToMovie(film),
                 );
-
-                // If multiple genres selected, filter client-side for additional genres
-                if (selectedGenres.length > 1) {
-                    mappedMovies = mappedMovies.filter((m) =>
-                        selectedGenres.every((genre) =>
-                            m.genre.includes(genre),
-                        ),
-                    );
-                }
 
                 setMovies(mappedMovies);
                 setPagination(
@@ -381,7 +389,7 @@ export default function CountriesFilterPage({
                 setIsPaginating(false);
             }
         },
-        [displayValue, selectedSort, selectedYear, selectedGenres],
+        [displayValue, selectedSort, selectedFormats, selectedGenres, selectedCountries, selectedYears],
     );
 
     // Fetch on mount and when filters change
@@ -394,27 +402,32 @@ export default function CountriesFilterPage({
         fetchFilms(page, true);
     };
 
-    // Toggle genre filter
-    const toggleGenre = (genre: string) => {
-        setSelectedGenres((prev) =>
-            prev.includes(genre)
-                ? prev.filter((g) => g !== genre)
-                : [...prev, genre],
-        );
+    // Toggle logic for filters
+    const toggleFilter = (
+        value: string,
+        current: string[],
+        updater: (v: string[]) => void
+    ) => {
+        if (current.includes(value)) {
+            updater(current.filter((item) => item !== value));
+        } else {
+            updater([...current, value]);
+        }
     };
 
     // Clear all filters
     const clearFilters = () => {
-        setSelectedYear("Tất cả");
+        setSelectedFormats([]);
         setSelectedGenres([]);
+        setSelectedCountries([]);
+        setSelectedYears([]);
     };
 
     const activeFilterCount =
-        (selectedYear !== "Tất cả" ? 1 : 0) + selectedGenres.length;
-
-    if (isLoading) {
-        return <LoadingScreen />;
-    }
+        selectedFormats.length +
+        selectedGenres.length +
+        selectedCountries.length +
+        selectedYears.length;
 
     return (
         <>
@@ -429,9 +442,6 @@ export default function CountriesFilterPage({
 
                 <div className='relative w-full px-4 lg:px-32 pt-10 pb-6'>
                     <div className='flex items-center gap-4 mb-2'>
-                        <div className='p-3 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10'>
-                            <Globe className='h-7 w-7 text-primary' />
-                        </div>
                         <div>
                             <h1 className='text-3xl lg:text-4xl font-black text-white'>
                                 Phim {displayValue}
@@ -489,8 +499,8 @@ export default function CountriesFilterPage({
                                             }
                                             variant='outline'
                                             className={`border-white/10 rounded-lg transition-all ${selectedSort === option.value
-                                                    ? "bg-[#8ae4ff]/20 border-[#8ae4ff]/50 text-[#8ae4ff]"
-                                                    : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+                                                ? "bg-[#8ae4ff]/20 border-[#8ae4ff]/50 text-[#8ae4ff]"
+                                                : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
                                                 }`}
                                         >
                                             <Icon className='h-4 w-4 mr-2' />
@@ -513,25 +523,24 @@ export default function CountriesFilterPage({
                     {/* Expanded Filter Panel */}
                     {showFilters && (
                         <div className='p-4 bg-white/5 border border-white/10 rounded-xl mb-4 animate-in slide-in-from-top-2'>
-                            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                                {/* Year Filter */}
+                            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
+                                {/* Format Filter */}
                                 <div>
-                                    <p className='text-sm font-semibold text-gray-400 mb-2'>
-                                        Năm phát hành
+                                    <p className='text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2'>
+                                        <Layers className="h-3.5 w-3.5" />
+                                        Định dạng
                                     </p>
-                                    <div className='flex flex-wrap gap-2 max-h-32 overflow-y-auto'>
-                                        {yearOptions.map((year) => (
+                                    <div className='flex flex-wrap gap-2 max-h-48 overflow-y-auto no-scrollbar'>
+                                        {formatOptions.map((fmt) => (
                                             <Badge
-                                                key={year}
-                                                onClick={() =>
-                                                    setSelectedYear(year)
-                                                }
-                                                className={`cursor-pointer transition-all ${selectedYear === year
-                                                        ? "bg-[#8ae4ff] text-black border-[#8ae4ff]"
-                                                        : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+                                                key={`fmt-${fmt}`}
+                                                onClick={() => toggleFilter(fmt, selectedFormats, setSelectedFormats)}
+                                                className={`cursor-pointer transition-all select-none ${selectedFormats.includes(fmt)
+                                                    ? "bg-[#8ae4ff] text-black border-[#8ae4ff]"
+                                                    : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
                                                     }`}
                                             >
-                                                {year}
+                                                {fmt}
                                             </Badge>
                                         ))}
                                     </div>
@@ -539,24 +548,65 @@ export default function CountriesFilterPage({
 
                                 {/* Genre Filter */}
                                 <div>
-                                    <p className='text-sm font-semibold text-gray-400 mb-2'>
+                                    <p className='text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2'>
+                                        <Tag className="h-3.5 w-3.5" />
                                         Thể loại
                                     </p>
-                                    <div className='flex flex-wrap gap-2 max-h-32 overflow-y-auto'>
+                                    <div className='flex flex-wrap gap-2 max-h-48 overflow-y-auto no-scrollbar'>
                                         {genreOptions.map((genre) => (
                                             <Badge
-                                                key={genre}
-                                                onClick={() =>
-                                                    toggleGenre(genre)
-                                                }
-                                                className={`cursor-pointer transition-all ${selectedGenres.includes(
-                                                    genre,
-                                                )
-                                                        ? "bg-[#8ae4ff] text-black border-[#8ae4ff]"
-                                                        : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+                                                key={`genre-${genre}`}
+                                                onClick={() => toggleFilter(genre, selectedGenres, setSelectedGenres)}
+                                                className={`cursor-pointer transition-all select-none ${selectedGenres.includes(genre)
+                                                    ? "bg-[#8ae4ff] text-black border-[#8ae4ff]"
+                                                    : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
                                                     }`}
                                             >
                                                 {genre}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Country Filter */}
+                                <div>
+                                    <p className='text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2'>
+                                        <MapPin className="h-3.5 w-3.5" />
+                                        Quốc gia
+                                    </p>
+                                    <div className='flex flex-wrap gap-2 max-h-48 overflow-y-auto no-scrollbar'>
+                                        {countryOptions?.filter(c => c !== displayValue).map((country) => (
+                                            <Badge
+                                                key={`country-${country}`}
+                                                onClick={() => toggleFilter(country, selectedCountries, setSelectedCountries)}
+                                                className={`cursor-pointer transition-all select-none ${selectedCountries.includes(country)
+                                                    ? "bg-[#8ae4ff] text-black border-[#8ae4ff]"
+                                                    : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+                                                    }`}
+                                            >
+                                                {country}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Year Filter */}
+                                <div>
+                                    <p className='text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2'>
+                                        <Calendar className="h-3.5 w-3.5" />
+                                        Năm phát hành
+                                    </p>
+                                    <div className='flex flex-wrap gap-2 max-h-48 overflow-y-auto no-scrollbar'>
+                                        {yearOptions.map((year) => (
+                                            <Badge
+                                                key={`year-${year}`}
+                                                onClick={() => toggleFilter(year, selectedYears, setSelectedYears)}
+                                                className={`cursor-pointer transition-all select-none ${selectedYears.includes(year)
+                                                    ? "bg-[#8ae4ff] text-black border-[#8ae4ff]"
+                                                    : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+                                                    }`}
+                                            >
+                                                {year}
                                             </Badge>
                                         ))}
                                     </div>
@@ -568,10 +618,10 @@ export default function CountriesFilterPage({
                                 <Button
                                     onClick={clearFilters}
                                     variant='ghost'
-                                    className='mt-3 text-[#8ae4ff] hover:text-[#8ae4ff]/80 hover:bg-[#8ae4ff]/10'
+                                    className='mt-4 text-[#8ae4ff] hover:text-[#8ae4ff]/80 hover:bg-[#8ae4ff]/10 w-full sm:w-auto'
                                 >
                                     <X className='h-4 w-4 mr-2' />
-                                    Xóa bộ lọc
+                                    Xóa bộ lọc ({activeFilterCount})
                                 </Button>
                             )}
                         </div>
@@ -580,7 +630,7 @@ export default function CountriesFilterPage({
 
                 {/* Results Grid */}
                 <div>
-                    {isPaginating ? (
+                    {isLoading || isPaginating ? (
                         <div className='flex flex-col items-center justify-center py-20'>
                             <Loader2 className='h-12 w-12 text-[#8ae4ff] animate-spin mb-4' />
                             <p className='text-gray-400'>Đang tải...</p>
@@ -615,7 +665,7 @@ export default function CountriesFilterPage({
                             <p className='text-gray-400 text-center max-w-md'>
                                 Hiện tại chưa có phim nào từ {displayValue}
                                 {activeFilterCount > 0 &&
-                                    ". Hãy thử xóa bộ lọc để xem nhiều phim hơn."}
+                                    " và các bộ lọc đã chọn. Hãy thử xóa bớt bộ lọc."}
                             </p>
                             {activeFilterCount > 0 && (
                                 <Button

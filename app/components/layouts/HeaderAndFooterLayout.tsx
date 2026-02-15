@@ -533,7 +533,8 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 							</h3>
 							<div className='grid grid-cols-2 lg:flex lg:flex-row gap-3'>
 								<button
-									className='flex items-center justify-center lg:justify-start gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-primary hover:text-black transition-all duration-300'
+									onClick={() => window.open("https://discord.com", "_blank")}
+									className='cursor-pointer flex items-center justify-center lg:justify-start gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-primary hover:text-black transition-all duration-300'
 									title='Discord'
 								>
 									<FaDiscord className='h-4 w-4 flex-shrink-0' />
@@ -542,7 +543,8 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 									</span>
 								</button>
 								<button
-									className='flex items-center justify-center lg:justify-start gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-primary hover:text-black transition-all duration-300'
+									onClick={() => window.open("https://facebook.com", "_blank")}
+									className='cursor-pointer flex items-center justify-center lg:justify-start gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-primary hover:text-black transition-all duration-300'
 									title='Facebook'
 								>
 									<FaFacebook className='h-4 w-4 flex-shrink-0' />
@@ -551,7 +553,8 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 									</span>
 								</button>
 								<button
-									className='flex items-center justify-center lg:justify-start gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-primary hover:text-black transition-all duration-300'
+									onClick={() => window.open("https://telegram.org", "_blank")}
+									className='cursor-pointer flex items-center justify-center lg:justify-start gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-primary hover:text-black transition-all duration-300'
 									title='Telegram'
 								>
 									<FaTelegram className='h-4 w-4 flex-shrink-0' />
@@ -560,7 +563,8 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 									</span>
 								</button>
 								<button
-									className='flex items-center justify-center lg:justify-start gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-primary hover:text-black transition-all duration-300'
+									onClick={() => window.open("https://www.threads.com/@chu3_rapphim", "_blank")}
+									className='cursor-pointer flex items-center justify-center lg:justify-start gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-primary hover:text-black transition-all duration-300'
 									title='Threads'
 								>
 									<SiThreads className='h-4 w-4 flex-shrink-0' />

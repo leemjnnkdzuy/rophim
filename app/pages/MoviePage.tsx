@@ -453,9 +453,6 @@ export default function MoviePage() {
 
                 <div className="relative w-full px-4 lg:px-32 pt-10 pb-6">
                     <div className="flex items-center gap-4 mb-2">
-                        <div className="p-3 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10">
-                            <Film className="h-7 w-7 text-primary" />
-                        </div>
                         <div>
                             <h1 className="text-3xl lg:text-4xl font-black text-white">
                                 Phim Lẻ

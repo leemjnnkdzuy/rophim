@@ -10,14 +10,15 @@ export async function GET(request: Request) {
         const genre = searchParams.get("genre");
         const country = searchParams.get("country");
         const year = searchParams.get("year");
+        const format = searchParams.get("format");
         const sort = searchParams.get("sort") || "views"; // views, rating, latest
         const page = parseInt(searchParams.get("page") || "1");
         const limit = parseInt(searchParams.get("limit") || "24");
         const skip = (page - 1) * limit;
 
-        if (!genre && !country) {
+        if (!genre && !country && !format && !year) {
             return NextResponse.json(
-                { message: "Genre or country parameter is required", films: [] },
+                { message: "At least one filter parameter is required", films: [] },
                 { status: 400 },
             );
         }
@@ -26,14 +27,32 @@ export async function GET(request: Request) {
 
         // Build filter query
         const filter: Record<string, unknown> = {};
-        if (genre) {
-            filter["genres.name"] = genre;
+
+        // Helper to split comma-separated strings
+        const parseList = (val: string | null) => val ? val.split(",").map(s => s.trim()).filter(Boolean) : [];
+
+        const genreList = parseList(genre);
+        if (genreList.length > 0) {
+            // AND logic for Genres (Refine search)
+            filter["genres.name"] = { $all: genreList };
         }
-        if (country) {
-            filter["countries.name"] = country;
+
+        const countryList = parseList(country);
+        if (countryList.length > 0) {
+            // OR logic for Countries
+            filter["countries.name"] = { $in: countryList };
         }
-        if (year && year !== "Tất cả") {
-            filter["years.name"] = year;
+
+        const yearList = parseList(year).filter(y => y !== "Tất cả");
+        if (yearList.length > 0) {
+            // OR logic for Years
+            filter["years.name"] = { $in: yearList };
+        }
+
+        const formatList = parseList(format);
+        if (formatList.length > 0) {
+            // OR logic for Formats
+            filter["formats.name"] = { $in: formatList };
         }
 
         // Build sort query
