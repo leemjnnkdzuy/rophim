@@ -416,7 +416,6 @@ export default function HomePage() {
 			<section className='w-full px-4 lg:px-32 py-10'>
 				<SectionTitle
 					title='Phim Thịnh Hành'
-					icon={<TrendingUp className='h-5 w-5' />}
 					href='/thinh-hanh'
 				/>
 				<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5'>
@@ -430,7 +429,6 @@ export default function HomePage() {
 			<section className='w-full px-4 lg:px-32 py-10 relative group'>
 				<SectionTitle
 					title='Khám Phá Theo Thể Loại'
-					icon={<Zap className='h-5 w-5' />}
 				/>
 
 				<div className='relative'>
@@ -512,7 +510,6 @@ export default function HomePage() {
 				movies={categoryMovies.series}
 				title='Phim Bộ Mới'
 				href='/series'
-				icon={<Film className='h-5 w-5' />}
 			/>
 
 			{/* Country Movies Tabbed Section */}
@@ -576,7 +573,6 @@ export default function HomePage() {
 			<SplitCategorySection
 				movies={categoryMovies.cartoon}
 				title='Phim Hoạt Hình'
-				icon={<Zap className='h-5 w-5' />}
 				href='/the-loai/hoat-hinh'
 			/>
 

@@ -45,7 +45,6 @@ export function SingleMovieSection({ movies }: { movies: Movie[] }) {
 		<section className='w-full px-4 lg:px-32 py-10 font-sans'>
 			<SectionTitle
 				title='Phim Lẻ Mới'
-				icon={<Zap className='h-5 w-5' />}
 				href='/movie'
 			/>
 

@@ -65,7 +65,7 @@ export function SplitCategorySection({ movies, title, href, icon }: SplitCategor
 
                     {/* Content */}
                     <div
-                        className={`absolute bottom-0 left-0 right-0 p-6 lg:p-8 z-10 transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}
+                        className={`absolute inset-0 flex flex-col justify-end p-6 lg:p-8 z-10 bg-black/20 backdrop-blur-md transition-opacity duration-500 ${isTransitioning ? 'opacity-0' : 'opacity-80'}`}
                     >
                         {/* Badges */}
                         <div className="flex items-center gap-2 mb-3 flex-wrap">
