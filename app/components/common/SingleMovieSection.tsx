@@ -157,16 +157,6 @@ export function SingleMovieSection({ movies }: { movies: Movie[] }) {
 								<Play className='h-4 w-4 mr-1.5' fill='black' />
 								Xem Phim
 							</Button>
-							<Button
-								variant='outline'
-								onClick={() =>
-									router.push(`/info/${active?.id}`)
-								}
-								className='border-white/15 text-white hover:bg-white/10 rounded-full px-5 font-medium h-10 text-sm cursor-pointer backdrop-blur-sm'
-							>
-								<Info className='h-4 w-4 mr-1.5' />
-								Chi Tiết
-							</Button>
 						</div>
 					</div>
 				</div>

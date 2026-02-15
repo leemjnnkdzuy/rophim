@@ -1,35 +1,7 @@
-import {NextRequest, NextResponse} from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import connectDatabase from "@/app/utils/connectDB";
-import User from "@/app/models/User";
 import Film from "@/app/models/Film";
-import {verifyAccessToken} from "@/app/utils/jwt";
-
-// Middleware to verify admin access
-async function verifyAdmin(request: NextRequest) {
-	const accessToken = request.cookies.get("access_token")?.value;
-
-	if (!accessToken) {
-		return {error: "Không tìm thấy token", status: 401};
-	}
-
-	const payload = verifyAccessToken(accessToken);
-	if (!payload) {
-		return {error: "Token không hợp lệ hoặc đã hết hạn", status: 401};
-	}
-
-	await connectDatabase();
-
-	const user = await User.findById(payload.userId).select("role");
-	if (!user) {
-		return {error: "Không tìm thấy người dùng", status: 404};
-	}
-
-	if (user.role !== "admin") {
-		return {error: "Không có quyền truy cập", status: 403};
-	}
-
-	return {user, error: null};
-}
+import { verifyAdmin } from "@/app/utils/adminAuth";
 
 // GET: Fetch all films with pagination and search
 export async function GET(request: NextRequest) {
@@ -38,8 +10,8 @@ export async function GET(request: NextRequest) {
 		const authResult = await verifyAdmin(request);
 		if (authResult.error) {
 			return NextResponse.json(
-				{success: false, message: authResult.error},
-				{status: authResult.status},
+				{ success: false, message: authResult.error },
+				{ status: authResult.status },
 			);
 		}
 
@@ -56,9 +28,9 @@ export async function GET(request: NextRequest) {
 		const query: Record<string, unknown> = {};
 		if (search) {
 			query.$or = [
-				{name: {$regex: search, $options: "i"}},
-				{original_name: {$regex: search, $options: "i"}},
-				{slug: {$regex: search, $options: "i"}},
+				{ name: { $regex: search, $options: "i" } },
+				{ original_name: { $regex: search, $options: "i" } },
+				{ slug: { $regex: search, $options: "i" } },
 			];
 		}
 
@@ -67,7 +39,7 @@ export async function GET(request: NextRequest) {
 			.select(
 				"name slug original_name poster_url thumb_url formats years views rating public created",
 			)
-			.sort({modified: -1})
+			.sort({ modified: -1 })
 			.skip(skip)
 			.limit(limit)
 			.lean();
@@ -87,14 +59,14 @@ export async function GET(request: NextRequest) {
 				film.formats && film.formats.length > 0 ?
 					film.formats[0].name.includes("bộ") ?
 						"series"
-					:	"single"
-				:	"single",
+						: "single"
+					: "single",
 			status: "completed",
 			episode_current: "",
 			year:
 				film.years && film.years.length > 0 ?
 					parseInt(film.years[0].name)
-				:	0,
+					: 0,
 			view: film.views || 0,
 			rating: film.rating || 0,
 			public: film.public !== undefined ? film.public : true,
@@ -111,8 +83,8 @@ export async function GET(request: NextRequest) {
 	} catch (error) {
 		console.error("Admin films fetch error:", error);
 		return NextResponse.json(
-			{success: false, message: "Lỗi server. Vui lòng thử lại sau."},
-			{status: 500},
+			{ success: false, message: "Lỗi server. Vui lòng thử lại sau." },
+			{ status: 500 },
 		);
 	}
 }
@@ -124,18 +96,18 @@ export async function PATCH(request: NextRequest) {
 		const authResult = await verifyAdmin(request);
 		if (authResult.error) {
 			return NextResponse.json(
-				{success: false, message: authResult.error},
-				{status: authResult.status},
+				{ success: false, message: authResult.error },
+				{ status: authResult.status },
 			);
 		}
 
 		const body = await request.json();
-		const {filmId, public: isPublic} = body;
+		const { filmId, public: isPublic } = body;
 
 		if (!filmId || typeof isPublic !== "boolean") {
 			return NextResponse.json(
-				{success: false, message: "Dữ liệu không hợp lệ"},
-				{status: 400},
+				{ success: false, message: "Dữ liệu không hợp lệ" },
+				{ status: 400 },
 			);
 		}
 
@@ -144,14 +116,14 @@ export async function PATCH(request: NextRequest) {
 		// Update film public status
 		const updatedFilm = await Film.findByIdAndUpdate(
 			filmId,
-			{public: isPublic},
-			{new: true, returnDocument: "after"},
+			{ public: isPublic },
+			{ new: true, returnDocument: "after" },
 		).select("_id slug public");
 
 		if (!updatedFilm) {
 			return NextResponse.json(
-				{success: false, message: "Không tìm thấy phim"},
-				{status: 404},
+				{ success: false, message: "Không tìm thấy phim" },
+				{ status: 404 },
 			);
 		}
 
@@ -167,8 +139,8 @@ export async function PATCH(request: NextRequest) {
 	} catch (error) {
 		console.error("Admin film update error:", error);
 		return NextResponse.json(
-			{success: false, message: "Lỗi server. Vui lòng thử lại sau."},
-			{status: 500},
+			{ success: false, message: "Lỗi server. Vui lòng thử lại sau." },
+			{ status: 500 },
 		);
 	}
 }
