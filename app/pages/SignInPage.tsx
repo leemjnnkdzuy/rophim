@@ -1,6 +1,6 @@
 "use client";
 
-import {useState} from "react";
+import { useState, useEffect } from "react";
 import {
 	User,
 	Lock,
@@ -11,27 +11,33 @@ import {
 	Moon,
 	Sun,
 } from "lucide-react";
-import {motion} from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
-import {useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
 
-import {Button} from "@/app/components/ui/button";
-import {TextInput} from "@/app/components/ui/TextInput";
-import {useAuth} from "@/app/hooks/useAuth";
-import {useTheme} from "@/app/hooks/useTheme";
-import {useGlobalNotificationPopup} from "@/app/hooks/useGlobalNotificationPopup";
+import { Button } from "@/app/components/ui/button";
+import { TextInput } from "@/app/components/ui/TextInput";
+import { useAuth } from "@/app/hooks/useAuth";
+import { useTheme } from "@/app/hooks/useTheme";
+import { useGlobalNotificationPopup } from "@/app/hooks/useGlobalNotificationPopup";
 
 export default function SignInPage() {
 	const router = useRouter();
-	const {theme, toggleTheme} = useTheme();
-	const {login} = useAuth();
-	const {showNotification} = useGlobalNotificationPopup();
+	const { theme, toggleTheme } = useTheme();
+	const { login, isAuthenticated, loading } = useAuth();
+	const { showNotification } = useGlobalNotificationPopup();
 
 	const [showPassword, setShowPassword] = useState(false);
 	const [identifier, setIdentifier] = useState("");
 	const [password, setPassword] = useState("");
 	const [rememberMe, setRememberMe] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
+
+	useEffect(() => {
+		if (!loading && isAuthenticated) {
+			router.push("/");
+		}
+	}, [loading, isAuthenticated, router]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -58,6 +64,10 @@ export default function SignInPage() {
 		}
 	};
 
+	if (loading) {
+		return null; // Or a loading spinner
+	}
+
 	return (
 		<div className='min-h-screen bg-white dark:bg-black text-black dark:text-white flex flex-col transition-colors duration-300'>
 			<header className='flex items-center justify-between px-4 sm:px-10 py-4 sm:py-6'>
@@ -73,15 +83,15 @@ export default function SignInPage() {
 				>
 					{theme === "dark" ?
 						<Sun className='w-5 h-5 text-black dark:text-white' />
-					:	<Moon className='w-5 h-5 text-black dark:text-white' />}
+						: <Moon className='w-5 h-5 text-black dark:text-white' />}
 				</Button>
 			</header>
 
 			<main className='flex-1 flex items-center justify-center px-4 sm:px-6'>
 				<motion.div
-					initial={{opacity: 0, y: 20}}
-					animate={{opacity: 1, y: 0}}
-					transition={{duration: 0.4}}
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ duration: 0.4 }}
 					className='w-full max-w-md'
 				>
 					<div className='w-full'>
@@ -126,7 +136,7 @@ export default function SignInPage() {
 									>
 										{showPassword ?
 											<EyeOff className='w-5 h-5' />
-										:	<Eye className='w-5 h-5' />}
+											: <Eye className='w-5 h-5' />}
 									</button>
 								}
 							/>
@@ -180,7 +190,7 @@ export default function SignInPage() {
 										<Loader2 className='w-5 h-5 mr-2 animate-spin' />
 										Đang đăng nhập...
 									</>
-								:	"Đăng nhập"}
+									: "Đăng nhập"}
 							</Button>
 						</form>
 

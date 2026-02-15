@@ -1,6 +1,6 @@
 "use client";
 
-import {useState, useRef} from "react";
+import { useState, useRef, useEffect } from "react";
 import {
 	Mail,
 	Lock,
@@ -11,20 +11,22 @@ import {
 	Moon,
 	Sun,
 } from "lucide-react";
-import {motion, AnimatePresence} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import {useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
 
-import {Button} from "@/app/components/ui/button";
-import {TextInput} from "@/app/components/ui/TextInput";
-import {useTheme} from "@/app/hooks/useTheme";
-import {authService} from "@/app/services/AuthService";
+import { Button } from "@/app/components/ui/button";
+import { TextInput } from "@/app/components/ui/TextInput";
+import { useTheme } from "@/app/hooks/useTheme";
+import { authService } from "@/app/services/AuthService";
+import { useAuth } from "@/app/hooks/useAuth";
 
 type Phase = "form" | "pin" | "success";
 
 export default function SignUpPage() {
 	const router = useRouter();
-	const {theme, toggleTheme} = useTheme();
+	const { theme, toggleTheme } = useTheme();
+	const { isAuthenticated, loading } = useAuth();
 	const [phase, setPhase] = useState<Phase>("form");
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
@@ -36,6 +38,16 @@ export default function SignUpPage() {
 
 	const [pin, setPin] = useState(["", "", "", "", "", ""]);
 	const pinInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+	useEffect(() => {
+		if (!loading && isAuthenticated) {
+			router.push("/");
+		}
+	}, [loading, isAuthenticated, router]);
+
+	if (loading) {
+		return null; // Or a loading spinner
+	}
 
 	const handleFormSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -170,21 +182,21 @@ export default function SignUpPage() {
 					>
 						<ArrowLeft className='w-5 h-5' />
 					</Link>
-				: phase === "pin" ?
-					<button
-						onClick={() => setPhase("form")}
-						className='flex items-center gap-3 hover:opacity-80 transition-opacity'
-					>
-						<ArrowLeft className='w-5 h-5' />
-					</button>
-				:	<div />}
+					: phase === "pin" ?
+						<button
+							onClick={() => setPhase("form")}
+							className='flex items-center gap-3 hover:opacity-80 transition-opacity'
+						>
+							<ArrowLeft className='w-5 h-5' />
+						</button>
+						: <div />}
 				<Button
 					onClick={toggleTheme}
 					className='!p-3 !bg-transparent !border-0 hover:!bg-black/5 dark:hover:!bg-white/10 !shadow-none'
 				>
 					{theme === "dark" ?
 						<Sun className='w-5 h-5 text-black dark:text-white' />
-					:	<Moon className='w-5 h-5 text-black dark:text-white' />}
+						: <Moon className='w-5 h-5 text-black dark:text-white' />}
 				</Button>
 			</header>
 
@@ -194,10 +206,10 @@ export default function SignUpPage() {
 					{phase === "form" && (
 						<motion.div
 							key='form'
-							initial={{opacity: 0, y: 20}}
-							animate={{opacity: 1, y: 0}}
-							exit={{opacity: 0, y: -20}}
-							transition={{duration: 0.3}}
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							exit={{ opacity: 0, y: -20 }}
+							transition={{ duration: 0.3 }}
 							className='w-full max-w-md'
 						>
 							<div className='w-full'>
@@ -284,7 +296,7 @@ export default function SignUpPage() {
 												<Loader2 className='w-5 h-5 mr-2 animate-spin' />
 												Đang gửi...
 											</>
-										:	"Tiếp tục"}
+											: "Tiếp tục"}
 									</Button>
 								</form>
 
@@ -305,10 +317,10 @@ export default function SignUpPage() {
 					{phase === "pin" && (
 						<motion.div
 							key='pin'
-							initial={{opacity: 0, y: 20}}
-							animate={{opacity: 1, y: 0}}
-							exit={{opacity: 0, y: -20}}
-							transition={{duration: 0.3}}
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							exit={{ opacity: 0, y: -20 }}
+							transition={{ duration: 0.3 }}
 							className='w-full max-w-md'
 						>
 							<div className='w-full text-center'>
@@ -373,7 +385,7 @@ export default function SignUpPage() {
 												<Loader2 className='w-5 h-5 mr-2 animate-spin' />
 												Đang xác thực...
 											</>
-										:	"Xác thực"}
+											: "Xác thực"}
 									</Button>
 								</form>
 
@@ -395,9 +407,9 @@ export default function SignUpPage() {
 					{phase === "success" && (
 						<motion.div
 							key='success'
-							initial={{opacity: 0, scale: 0.95}}
-							animate={{opacity: 1, scale: 1}}
-							transition={{duration: 0.3}}
+							initial={{ opacity: 0, scale: 0.95 }}
+							animate={{ opacity: 1, scale: 1 }}
+							transition={{ duration: 0.3 }}
 							className='w-full max-w-md text-center'
 						>
 							<div className='w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6'>

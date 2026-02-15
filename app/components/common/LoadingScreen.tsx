@@ -22,7 +22,7 @@ export function LoadingScreen() {
 					fill
 					className='object-cover scale-110 blur-sm'
 					priority
-					quality={80}
+					quality={75}
 				/>
 			</div>
 
@@ -84,6 +84,7 @@ export function LoadingScreen() {
 							src={icon}
 							alt='RapPhim'
 							fill
+							sizes="96px"
 							className='object-cover'
 							priority
 						/>
