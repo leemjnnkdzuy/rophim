@@ -403,13 +403,25 @@ export default function WatchPage({
 								<Star className='h-4 w-4 mr-1.5 fill-black' />
 								Đánh giá phim
 							</Button>
-							<Button
-								variant='outline'
-								size='icon'
-								className='border-white/10 text-gray-400 hover:bg-white/10 hover:text-white rounded-full h-9 w-9 cursor-pointer transition-all'
-							>
-								<Heart className='h-4 w-4' />
-							</Button>
+							{isSaved ?
+								<Button
+									onClick={handleToggleSave}
+									disabled={isSaving}
+									size='icon'
+									className='bg-amber-500 hover:bg-amber-600 text-black rounded-full h-9 w-9 shadow-lg shadow-amber-500/20 transition-all duration-300 cursor-pointer'
+								>
+									<Bookmark className='h-4 w-4' />
+								</Button>
+								: <Button
+									variant='outline'
+									size='icon'
+									onClick={handleToggleSave}
+									disabled={isSaving}
+									className='border-white/10 text-gray-400 hover:bg-white/10 hover:text-white rounded-full h-9 w-9 cursor-pointer transition-all'
+								>
+									<Bookmark className='h-4 w-4' />
+								</Button>
+							}
 							<Button
 								variant='outline'
 								size='icon'

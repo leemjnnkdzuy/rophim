@@ -24,12 +24,17 @@ export async function GET(request: Request) {
 
 		// Search in multiple fields
 		const films = await Film.find({
-			$or: [
-				{name: searchRegex},
-				{original_name: searchRegex},
-				{description: searchRegex},
-				{director: searchRegex},
-				{casts: searchRegex},
+			$and: [
+				{public: true},
+				{
+					$or: [
+						{name: searchRegex},
+						{original_name: searchRegex},
+						{description: searchRegex},
+						{director: searchRegex},
+						{casts: searchRegex},
+					],
+				},
 			],
 		})
 			.sort({views: -1, modified: -1}) // Sort by views first, then by modified date

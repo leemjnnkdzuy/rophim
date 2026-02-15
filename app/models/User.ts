@@ -26,6 +26,7 @@ export interface IUser extends Document {
 		ratedAt: Date;
 	}>;
 	isVerified: boolean;
+	isActive: boolean;
 	showSavedFilms: boolean;
 	createdAt: Date;
 	updatedAt: Date;
@@ -122,6 +123,10 @@ const userSchema = new Schema<IUser>(
 			},
 		],
 		isVerified: {
+			type: Boolean,
+			default: true,
+		},
+		isActive: {
 			type: Boolean,
 			default: true,
 		},

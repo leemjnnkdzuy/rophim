@@ -31,6 +31,14 @@ export async function GET(
 		try {
 			await connectDatabase();
 			localFilm = await Film.findOne({slug}).lean();
+
+			// If film exists in DB but is not public, return 404
+			if (localFilm && localFilm.public === false) {
+				return NextResponse.json(
+					{message: "Film not found"},
+					{status: 404},
+				);
+			}
 		} catch (dbError) {
 			console.warn(
 				"[API] Database connection failed:",

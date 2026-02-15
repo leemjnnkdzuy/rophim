@@ -1,4 +1,4 @@
-import {NextRequest, NextResponse} from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import connectDatabase from "@/app/utils/connectDB";
 import User from "@/app/models/User";
 import {
@@ -13,7 +13,7 @@ import {
 export async function POST(request: NextRequest) {
 	try {
 		const body = await request.json();
-		const {identifier, password, rememberMe = false} = body;
+		const { identifier, password, rememberMe = false } = body;
 
 		if (!identifier || !password) {
 			return NextResponse.json(
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 					success: false,
 					message: "Vui lòng nhập email/username và mật khẩu",
 				},
-				{status: 400},
+				{ status: 400 },
 			);
 		}
 
@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
 
 		const user =
 			isEmail ?
-				await User.findOne({email: identifier.toLowerCase()})
-			:	await User.findOne({username: identifier.toLowerCase()});
+				await User.findOne({ email: identifier.toLowerCase() })
+				: await User.findOne({ username: identifier.toLowerCase() });
 
 		if (!user) {
 			return NextResponse.json(
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 					success: false,
 					message: "Email/Username hoặc mật khẩu không đúng",
 				},
-				{status: 401},
+				{ status: 401 },
 			);
 		}
 
@@ -51,14 +51,14 @@ export async function POST(request: NextRequest) {
 					success: false,
 					message: "Email/Username hoặc mật khẩu không đúng",
 				},
-				{status: 401},
+				{ status: 401 },
 			);
 		}
 
 		if (!user.isVerified) {
 			return NextResponse.json(
-				{success: false, message: "Tài khoản chưa được xác thực"},
-				{status: 401},
+				{ success: false, message: "Tài khoản chưa được xác thực" },
+				{ status: 401 },
 			);
 		}
 
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 		const refreshTokenMaxAge =
 			rememberMe ?
 				REFRESH_TOKEN_LONG_MAX_AGE
-			:	REFRESH_TOKEN_SHORT_MAX_AGE;
+				: REFRESH_TOKEN_SHORT_MAX_AGE;
 
 		const userData = {
 			id: user._id.toString(),
@@ -78,8 +78,9 @@ export async function POST(request: NextRequest) {
 			avatar:
 				user.avatar ?
 					`data:${user.avatar.mime};base64,${user.avatar.data}`
-				:	null,
+					: null,
 			isVerified: user.isVerified,
+			role: user.role || "user",
 			createdAt: user.createdAt,
 		};
 
@@ -105,8 +106,8 @@ export async function POST(request: NextRequest) {
 	} catch (error) {
 		console.error("Login error:", error);
 		return NextResponse.json(
-			{success: false, message: "Lỗi server. Vui lòng thử lại sau."},
-			{status: 500},
+			{ success: false, message: "Lỗi server. Vui lòng thử lại sau." },
+			{ status: 500 },
 		);
 	}
 }

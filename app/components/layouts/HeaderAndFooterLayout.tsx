@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect} from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { icon } from "@/app/assets";
-import { Input } from "@/app/components/ui/input";
-import { SearchWithSuggestions } from "@/app/components/common/SearchSuggestions";
-import { Button } from "@/app/components/ui/button";
-import { Badge } from "@/app/components/ui/badge";
+import {useRouter} from "next/navigation";
+import {icon} from "@/app/assets";
+import {Input} from "@/app/components/ui/input";
+import {SearchWithSuggestions} from "@/app/components/common/SearchSuggestions";
+import {Button} from "@/app/components/ui/button";
+import {Badge} from "@/app/components/ui/badge";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -32,12 +32,13 @@ import {
 	Tv,
 	Users,
 	Flame,
+	LayoutDashboard,
 } from "lucide-react";
-import { FaDiscord, FaFacebook, FaTelegram } from "react-icons/fa";
-import { SiThreads } from "react-icons/si";
+import {FaDiscord, FaFacebook, FaTelegram} from "react-icons/fa";
+import {SiThreads} from "react-icons/si";
 import api from "@/app/utils/axios";
-import { useAuth } from "@/app/hooks/useAuth";
-import { trongDong } from "@/app/assets";
+import {useAuth} from "@/app/hooks/useAuth";
+import {trongDong} from "@/app/assets";
 
 // --- Sub Components ---
 
@@ -48,7 +49,12 @@ interface NavDropdownProps {
 	basePath?: string;
 }
 
-function NavDropdown({ label, items, icon, basePath = "/the-loai" }: NavDropdownProps) {
+function NavDropdown({
+	label,
+	items,
+	icon,
+	basePath = "/the-loai",
+}: NavDropdownProps) {
 	const router = useRouter();
 	return (
 		<DropdownMenu>
@@ -90,7 +96,7 @@ interface NavLinkProps {
 	badge?: string;
 }
 
-function NavLink({ href, label, icon, badge }: NavLinkProps) {
+function NavLink({href, label, icon, badge}: NavLinkProps) {
 	const router = useRouter();
 	return (
 		<button
@@ -110,12 +116,12 @@ function NavLink({ href, label, icon, badge }: NavLinkProps) {
 
 // --- Main Layout ---
 
-export default function HeaderLayout({ children }: { children: React.ReactNode }) {
+export default function HeaderLayout({children}: {children: React.ReactNode}) {
 	const router = useRouter();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [genres, setGenres] = useState<string[]>([]);
 	const [countries, setCountries] = useState<string[]>([]);
-	const { isAuthenticated, user, logout } = useAuth();
+	const {isAuthenticated, user, logout} = useAuth();
 
 	// Handle search (mobile)
 	const handleSearch = () => {
@@ -130,7 +136,6 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 			handleSearch();
 		}
 	};
-
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -243,7 +248,7 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 													unoptimized
 													className='h-9 w-9 rounded-full border border-white/10 object-cover shadow-lg shadow-primary/20 cursor-pointer'
 												/>
-												: <span className='flex h-9 w-9 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20 cursor-pointer'>
+											:	<span className='flex h-9 w-9 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20 cursor-pointer'>
 													<User className='h-4 w-4' />
 												</span>
 											}
@@ -280,6 +285,17 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 											<History className='h-4 w-4 mr-2' />
 											Lịch sử xem
 										</DropdownMenuItem>
+										{user?.role === "admin" && (
+											<DropdownMenuItem
+												className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer'
+												onClick={() =>
+													router.push("/admin")
+												}
+											>
+												<LayoutDashboard className='h-4 w-4 mr-2' />
+												Trang quản lý
+											</DropdownMenuItem>
+										)}
 										<DropdownMenuItem
 											className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer'
 											onSelect={(event) => {
@@ -292,7 +308,7 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 										</DropdownMenuItem>
 									</DropdownMenuContent>
 								</DropdownMenu>
-								: <Button
+							:	<Button
 									onClick={() => router.push("/sign-in")}
 									className='hidden sm:flex items-center gap-2 bg-primary hover:bg-primary/90 text-black rounded-full px-5 font-bold shadow-lg shadow-primary/20 h-9 transition-all duration-300 cursor-pointer'
 								>
@@ -410,6 +426,15 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 														<History className='h-4 w-4' />
 													}
 												/>
+												{user?.role === "admin" && (
+													<MobileNavLink
+														href='/admin'
+														label='Trang quản lý'
+														icon={
+															<LayoutDashboard className='h-4 w-4' />
+														}
+													/>
+												)}
 											</div>
 										</div>
 
@@ -443,35 +468,35 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 														</p>
 													</div>
 												</button>
-												: isAuthenticated ?
-													<button
-														onClick={() =>
-															router.push("/profile")
-														}
-														className='flex items-center gap-3'
-													>
-														<span className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20'>
-															<User className='h-4 w-4' />
-														</span>
-														<div className='min-w-0'>
-															<p className='text-sm font-semibold text-white truncate'>
-																{user?.username ||
-																	"Tài khoản"}
-															</p>
-															<p className='text-xs text-gray-400 truncate'>
-																Xem hồ sơ
-															</p>
-														</div>
-													</button>
-													: <Button
-														onClick={() =>
-															router.push("/sign-in")
-														}
-														className='w-full bg-primary hover:bg-primary/90 text-black rounded-full font-bold shadow-lg shadow-primary/20'
-													>
-														<User className='h-4 w-4 mr-2' />
-														Đăng nhập / Đăng ký
-													</Button>
+											: isAuthenticated ?
+												<button
+													onClick={() =>
+														router.push("/profile")
+													}
+													className='flex items-center gap-3'
+												>
+													<span className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20'>
+														<User className='h-4 w-4' />
+													</span>
+													<div className='min-w-0'>
+														<p className='text-sm font-semibold text-white truncate'>
+															{user?.username ||
+																"Tài khoản"}
+														</p>
+														<p className='text-xs text-gray-400 truncate'>
+															Xem hồ sơ
+														</p>
+													</div>
+												</button>
+											:	<Button
+													onClick={() =>
+														router.push("/sign-in")
+													}
+													className='w-full bg-primary hover:bg-primary/90 text-black rounded-full font-bold shadow-lg shadow-primary/20'
+												>
+													<User className='h-4 w-4 mr-2' />
+													Đăng nhập / Đăng ký
+												</Button>
 											}
 										</div>
 									</div>
@@ -490,7 +515,7 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 				{/* Background Image with Effects */}
 				<div
 					className='absolute inset-0 pointer-events-none animate-spin-slow'
-					style={{ transformOrigin: "center" }}
+					style={{transformOrigin: "center"}}
 				>
 					<Image
 						src={trongDong}
@@ -533,7 +558,12 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 							</h3>
 							<div className='grid grid-cols-2 lg:flex lg:flex-row gap-3'>
 								<button
-									onClick={() => window.open("https://discord.com", "_blank")}
+									onClick={() =>
+										window.open(
+											"https://discord.com",
+											"_blank",
+										)
+									}
 									className='cursor-pointer flex items-center justify-center lg:justify-start gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-primary hover:text-black transition-all duration-300'
 									title='Discord'
 								>
@@ -543,7 +573,12 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 									</span>
 								</button>
 								<button
-									onClick={() => window.open("https://facebook.com", "_blank")}
+									onClick={() =>
+										window.open(
+											"https://facebook.com",
+											"_blank",
+										)
+									}
 									className='cursor-pointer flex items-center justify-center lg:justify-start gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-primary hover:text-black transition-all duration-300'
 									title='Facebook'
 								>
@@ -553,7 +588,12 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 									</span>
 								</button>
 								<button
-									onClick={() => window.open("https://telegram.org", "_blank")}
+									onClick={() =>
+										window.open(
+											"https://telegram.org",
+											"_blank",
+										)
+									}
 									className='cursor-pointer flex items-center justify-center lg:justify-start gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-primary hover:text-black transition-all duration-300'
 									title='Telegram'
 								>
@@ -563,7 +603,12 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 									</span>
 								</button>
 								<button
-									onClick={() => window.open("https://www.threads.com/@chu3_rapphim", "_blank")}
+									onClick={() =>
+										window.open(
+											"https://www.threads.com/@chu3_rapphim",
+											"_blank",
+										)
+									}
 									className='cursor-pointer flex items-center justify-center lg:justify-start gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-primary hover:text-black transition-all duration-300'
 									title='Threads'
 								>
@@ -658,11 +703,20 @@ function MobileNavLink({
 	);
 }
 
-function MobileNavSection({ title, items, basePath }: { title: string; items: string[]; basePath?: string }) {
+function MobileNavSection({
+	title,
+	items,
+	basePath,
+}: {
+	title: string;
+	items: string[];
+	basePath?: string;
+}) {
 	const router = useRouter();
 	const [isOpen, setIsOpen] = useState(false);
 
-	const resolvedBasePath = basePath || (title === "Quốc Gia" ? "/quoc-gia" : "/the-loai");
+	const resolvedBasePath =
+		basePath || (title === "Quốc Gia" ? "/quoc-gia" : "/the-loai");
 
 	return (
 		<div>

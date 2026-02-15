@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect} from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { icon } from "@/app/assets";
-import { Input } from "@/app/components/ui/input";
-import { SearchWithSuggestions } from "@/app/components/common/SearchSuggestions";
-import { Button } from "@/app/components/ui/button";
-import { Badge } from "@/app/components/ui/badge";
+import {useRouter} from "next/navigation";
+import {icon} from "@/app/assets";
+import {Input} from "@/app/components/ui/input";
+import {SearchWithSuggestions} from "@/app/components/common/SearchSuggestions";
+import {Button} from "@/app/components/ui/button";
+import {Badge} from "@/app/components/ui/badge";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -34,9 +34,10 @@ import {
 	Users,
 	Calendar,
 	Flame,
+	LayoutDashboard,
 } from "lucide-react";
 import api from "@/app/utils/axios";
-import { useAuth } from "@/app/hooks/useAuth";
+import {useAuth} from "@/app/hooks/useAuth";
 
 // --- Data ---
 const DEFAULT_GENRES = [
@@ -81,7 +82,7 @@ interface NavDropdownProps {
 	icon?: React.ReactNode;
 }
 
-function NavDropdown({ label, items, icon }: NavDropdownProps) {
+function NavDropdown({label, items, icon}: NavDropdownProps) {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
@@ -122,7 +123,7 @@ interface NavLinkProps {
 	badge?: string;
 }
 
-function NavLink({ href, label, icon, badge }: NavLinkProps) {
+function NavLink({href, label, icon, badge}: NavLinkProps) {
 	return (
 		<Link
 			href={href}
@@ -141,11 +142,11 @@ function NavLink({ href, label, icon, badge }: NavLinkProps) {
 
 // --- Main Layout ---
 
-export default function HeaderLayout({ children }: { children: React.ReactNode }) {
+export default function HeaderLayout({children}: {children: React.ReactNode}) {
 	const router = useRouter();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [genres, setGenres] = useState<string[]>(DEFAULT_GENRES);
-	const { isAuthenticated, user, logout } = useAuth();
+	const {isAuthenticated, user, logout} = useAuth();
 
 	// Handle search
 	const handleSearch = () => {
@@ -258,7 +259,7 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 													unoptimized
 													className='h-9 w-9 rounded-full border border-white/10 object-cover shadow-lg shadow-primary/20'
 												/>
-												: <span className='flex h-9 w-9 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20'>
+											:	<span className='flex h-9 w-9 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20'>
 													<User className='h-4 w-4' />
 												</span>
 											}
@@ -295,6 +296,17 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 												Lịch sử xem
 											</Link>
 										</DropdownMenuItem>
+										{user?.role === "admin" && (
+											<DropdownMenuItem className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer'>
+												<Link
+													href='/admin'
+													className='w-full flex items-center gap-2'
+												>
+													<LayoutDashboard className='h-4 w-4' />
+													Trang quản lý
+												</Link>
+											</DropdownMenuItem>
+										)}
 										<DropdownMenuItem
 											className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer'
 											onSelect={(event) => {
@@ -309,7 +321,7 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 										</DropdownMenuItem>
 									</DropdownMenuContent>
 								</DropdownMenu>
-								: <Link href='/sign-in'>
+							:	<Link href='/sign-in'>
 									<Button className='hidden sm:flex items-center gap-2 bg-primary hover:bg-primary/90 text-black rounded-full px-5 font-bold shadow-lg shadow-primary/20 h-9 transition-all duration-300'>
 										<User className='h-4 w-4' />
 										Đăng Nhập
@@ -426,6 +438,34 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 														<Calendar className='h-4 w-4' />
 													}
 												/>
+												{isAuthenticated && (
+													<>
+														<MobileNavLink
+															href='/saved'
+															label='Phim đã lưu'
+															icon={
+																<Bookmark className='h-4 w-4' />
+															}
+														/>
+														<MobileNavLink
+															href='/history'
+															label='Lịch sử xem'
+															icon={
+																<History className='h-4 w-4' />
+															}
+														/>
+														{user?.role ===
+															"admin" && (
+															<MobileNavLink
+																href='/admin'
+																label='Trang quản lý'
+																icon={
+																	<LayoutDashboard className='h-4 w-4' />
+																}
+															/>
+														)}
+													</>
+												)}
 											</div>
 										</div>
 
@@ -457,33 +497,33 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 														</p>
 													</div>
 												</Link>
-												: isAuthenticated ?
-													<Link
-														href='/profile'
-														className='flex items-center gap-3'
-													>
-														<span className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20'>
-															<User className='h-4 w-4' />
-														</span>
-														<div className='min-w-0'>
-															<p className='text-sm font-semibold text-white truncate'>
-																{user?.username ||
-																	"Tài khoản"}
-															</p>
-															<p className='text-xs text-gray-400 truncate'>
-																Xem hồ sơ
-															</p>
-														</div>
-													</Link>
-													: <Link
-														href='/sign-in'
-														className='block'
-													>
-														<Button className='w-full bg-primary hover:bg-primary/90 text-black rounded-full font-bold shadow-lg shadow-primary/20'>
-															<User className='h-4 w-4 mr-2' />
-															Đăng nhập / Đăng ký
-														</Button>
-													</Link>
+											: isAuthenticated ?
+												<Link
+													href='/profile'
+													className='flex items-center gap-3'
+												>
+													<span className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20'>
+														<User className='h-4 w-4' />
+													</span>
+													<div className='min-w-0'>
+														<p className='text-sm font-semibold text-white truncate'>
+															{user?.username ||
+																"Tài khoản"}
+														</p>
+														<p className='text-xs text-gray-400 truncate'>
+															Xem hồ sơ
+														</p>
+													</div>
+												</Link>
+											:	<Link
+													href='/sign-in'
+													className='block'
+												>
+													<Button className='w-full bg-primary hover:bg-primary/90 text-black rounded-full font-bold shadow-lg shadow-primary/20'>
+														<User className='h-4 w-4 mr-2' />
+														Đăng nhập / Đăng ký
+													</Button>
+												</Link>
 											}
 										</div>
 									</div>
@@ -529,7 +569,7 @@ function MobileNavLink({
 	);
 }
 
-function MobileNavSection({ title, items }: { title: string; items: string[] }) {
+function MobileNavSection({title, items}: {title: string; items: string[]}) {
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (

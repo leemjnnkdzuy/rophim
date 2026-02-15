@@ -8,7 +8,6 @@ import {
 	Info,
 	Star,
 	Clock,
-	Zap,
 	ChevronLeft,
 	ChevronRight,
 } from "lucide-react";
