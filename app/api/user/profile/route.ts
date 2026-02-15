@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// PATCH: Toggle showSavedFilms
+// PATCH: Update profile (showSavedFilms, avatar)
 export async function PATCH(request: NextRequest) {
     try {
         const userId = getUserId(request);
@@ -145,18 +145,66 @@ export async function PATCH(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { showSavedFilms } = body;
+        const { showSavedFilms, avatar } = body;
 
         await connectDatabase();
 
-        await User.findByIdAndUpdate(userId, {
-            showSavedFilms: Boolean(showSavedFilms),
-        });
+        const updateData: Record<string, unknown> = {};
 
-        return NextResponse.json({
-            success: true,
-            showSavedFilms: Boolean(showSavedFilms),
-        });
+        // Handle showSavedFilms toggle
+        if (typeof showSavedFilms === "boolean") {
+            updateData.showSavedFilms = showSavedFilms;
+        }
+
+        // Handle avatar update (base64 data URL)
+        if (avatar && typeof avatar === "string") {
+            // Validate and parse data URL: "data:image/webp;base64,..."
+            const match = avatar.match(/^data:(image\/\w+);base64,(.+)$/);
+            if (!match) {
+                return NextResponse.json(
+                    { success: false, message: "Định dạng ảnh không hợp lệ" },
+                    { status: 400 },
+                );
+            }
+
+            const mime = match[1];
+            const data = match[2];
+
+            // Check size (base64 is ~33% larger than binary, limit to ~2MB raw)
+            if (data.length > 3 * 1024 * 1024) {
+                return NextResponse.json(
+                    { success: false, message: "Ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn." },
+                    { status: 400 },
+                );
+            }
+
+            updateData.avatar = { mime, data };
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            return NextResponse.json(
+                { success: false, message: "Không có dữ liệu cập nhật" },
+                { status: 400 },
+            );
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true })
+            .select("avatar showSavedFilms")
+            .lean();
+
+        const responseData: Record<string, unknown> = { success: true };
+
+        if (typeof showSavedFilms === "boolean") {
+            responseData.showSavedFilms = updatedUser?.showSavedFilms;
+        }
+
+        if (avatar) {
+            responseData.avatar = updatedUser?.avatar?.data
+                ? `data:${updatedUser.avatar.mime};base64,${updatedUser.avatar.data}`
+                : "";
+        }
+
+        return NextResponse.json(responseData);
     } catch (error) {
         console.error("Update profile error:", error);
         return NextResponse.json(

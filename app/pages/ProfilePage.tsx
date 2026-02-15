@@ -13,6 +13,7 @@ import {
     User,
     ArrowLeft,
     Film,
+    Camera,
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
@@ -21,6 +22,7 @@ import { useAuth } from "@/app/hooks/useAuth";
 import api from "@/app/utils/axios";
 import { MovieCard } from "@/app/components/common/MovieCard";
 import { Movie } from "@/app/types/movie";
+import { AvatarCropDialog } from "@/app/components/common/AvatarCropDialog";
 
 interface SavedFilm {
     slug: string;
@@ -52,6 +54,7 @@ export default function ProfilePage({ identifier }: { identifier?: string }) {
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
+    const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
 
     const targetUsername = identifier || undefined;
 
@@ -107,6 +110,15 @@ export default function ProfilePage({ identifier }: { identifier?: string }) {
         } catch {
             // Fallback
             window.prompt("Sao chép link:", url);
+        }
+    };
+
+    const handleAvatarSave = async (base64: string) => {
+        const res = await api.patch("/user/profile", { avatar: base64 });
+        if (res.data?.success && res.data.avatar !== undefined) {
+            setProfile((prev) =>
+                prev ? { ...prev, avatar: res.data.avatar } : prev,
+            );
         }
     };
 
@@ -228,6 +240,16 @@ export default function ProfilePage({ identifier }: { identifier?: string }) {
                                 </div>
                             )}
                         </div>
+                        {/* Camera overlay for owner */}
+                        {isOwn && (
+                            <button
+                                onClick={() => setIsAvatarDialogOpen(true)}
+                                className="absolute inset-0 rounded-full flex items-center justify-center bg-black/0 group-hover:bg-black/50 transition-all duration-200 cursor-pointer"
+                                title="Thay đổi ảnh đại diện"
+                            >
+                                <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 drop-shadow-lg" />
+                            </button>
+                        )}
                     </div>
 
                     {/* Name & Actions */}
@@ -365,6 +387,14 @@ export default function ProfilePage({ identifier }: { identifier?: string }) {
                     </div>
                 )}
             </div>
+
+            {/* Avatar Crop Dialog */}
+            <AvatarCropDialog
+                isOpen={isAvatarDialogOpen}
+                onClose={() => setIsAvatarDialogOpen(false)}
+                onSave={handleAvatarSave}
+                currentAvatar={profile.avatar}
+            />
         </div>
     );
 }
