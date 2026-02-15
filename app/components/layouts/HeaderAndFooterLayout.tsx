@@ -1,13 +1,13 @@
 "use client";
 
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import {useRouter} from "next/navigation";
-import {icon} from "@/app/assets";
-import {Input} from "@/app/components/ui/input";
-import {SearchWithSuggestions} from "@/app/components/common/SearchSuggestions";
-import {Button} from "@/app/components/ui/button";
-import {Badge} from "@/app/components/ui/badge";
+import { useRouter } from "next/navigation";
+import { icon } from "@/app/assets";
+import { Input } from "@/app/components/ui/input";
+import { SearchWithSuggestions } from "@/app/components/common/SearchSuggestions";
+import { Button } from "@/app/components/ui/button";
+import { Badge } from "@/app/components/ui/badge";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -34,11 +34,11 @@ import {
 	Flame,
 	LayoutDashboard,
 } from "lucide-react";
-import {FaDiscord, FaFacebook, FaTelegram} from "react-icons/fa";
-import {SiThreads} from "react-icons/si";
+import { FaDiscord, FaFacebook, FaTelegram } from "react-icons/fa";
+import { SiThreads } from "react-icons/si";
 import api from "@/app/utils/axios";
-import {useAuth} from "@/app/hooks/useAuth";
-import {trongDong} from "@/app/assets";
+import { useAuth } from "@/app/hooks/useAuth";
+import { trongDong } from "@/app/assets";
 
 // --- Sub Components ---
 
@@ -96,7 +96,7 @@ interface NavLinkProps {
 	badge?: string;
 }
 
-function NavLink({href, label, icon, badge}: NavLinkProps) {
+function NavLink({ href, label, icon, badge }: NavLinkProps) {
 	const router = useRouter();
 	return (
 		<button
@@ -116,12 +116,12 @@ function NavLink({href, label, icon, badge}: NavLinkProps) {
 
 // --- Main Layout ---
 
-export default function HeaderLayout({children}: {children: React.ReactNode}) {
+export default function HeaderLayout({ children }: { children: React.ReactNode }) {
 	const router = useRouter();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [genres, setGenres] = useState<string[]>([]);
 	const [countries, setCountries] = useState<string[]>([]);
-	const {isAuthenticated, user, logout} = useAuth();
+	const { isAuthenticated, user, logout } = useAuth();
 
 	// Handle search (mobile)
 	const handleSearch = () => {
@@ -248,7 +248,7 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 													unoptimized
 													className='h-9 w-9 rounded-full border border-white/10 object-cover shadow-lg shadow-primary/20 cursor-pointer'
 												/>
-											:	<span className='flex h-9 w-9 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20 cursor-pointer'>
+												: <span className='flex h-9 w-9 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20 cursor-pointer'>
 													<User className='h-4 w-4' />
 												</span>
 											}
@@ -308,7 +308,7 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 										</DropdownMenuItem>
 									</DropdownMenuContent>
 								</DropdownMenu>
-							:	<Button
+								: <Button
 									onClick={() => router.push("/sign-in")}
 									className='hidden sm:flex items-center gap-2 bg-primary hover:bg-primary/90 text-black rounded-full px-5 font-bold shadow-lg shadow-primary/20 h-9 transition-all duration-300 cursor-pointer'
 								>
@@ -468,35 +468,35 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 														</p>
 													</div>
 												</button>
-											: isAuthenticated ?
-												<button
-													onClick={() =>
-														router.push("/profile")
-													}
-													className='flex items-center gap-3'
-												>
-													<span className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20'>
-														<User className='h-4 w-4' />
-													</span>
-													<div className='min-w-0'>
-														<p className='text-sm font-semibold text-white truncate'>
-															{user?.username ||
-																"Tài khoản"}
-														</p>
-														<p className='text-xs text-gray-400 truncate'>
-															Xem hồ sơ
-														</p>
-													</div>
-												</button>
-											:	<Button
-													onClick={() =>
-														router.push("/sign-in")
-													}
-													className='w-full bg-primary hover:bg-primary/90 text-black rounded-full font-bold shadow-lg shadow-primary/20'
-												>
-													<User className='h-4 w-4 mr-2' />
-													Đăng nhập / Đăng ký
-												</Button>
+												: isAuthenticated ?
+													<button
+														onClick={() =>
+															router.push("/profile")
+														}
+														className='flex items-center gap-3'
+													>
+														<span className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20'>
+															<User className='h-4 w-4' />
+														</span>
+														<div className='min-w-0'>
+															<p className='text-sm font-semibold text-white truncate'>
+																{user?.username ||
+																	"Tài khoản"}
+															</p>
+															<p className='text-xs text-gray-400 truncate'>
+																Xem hồ sơ
+															</p>
+														</div>
+													</button>
+													: <Button
+														onClick={() =>
+															router.push("/sign-in")
+														}
+														className='w-full bg-primary hover:bg-primary/90 text-black rounded-full font-bold shadow-lg shadow-primary/20'
+													>
+														<User className='h-4 w-4 mr-2' />
+														Đăng nhập / Đăng ký
+													</Button>
 											}
 										</div>
 									</div>
@@ -515,7 +515,7 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 				{/* Background Image with Effects */}
 				<div
 					className='absolute inset-0 pointer-events-none animate-spin-slow'
-					style={{transformOrigin: "center"}}
+					style={{ transformOrigin: "center" }}
 				>
 					<Image
 						src={trongDong}
@@ -626,15 +626,20 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 								Thông Tin
 							</h3>
 							<div className='flex flex-wrap gap-6 text-sm'>
+								<button
+									onClick={() => router.push("/introduction")}
+									className='cursor-pointer text-gray-500 hover:text-primary transition-colors text-left'
+								>
+									Giới Thiệu
+								</button>
 								{[
-									"Giới Thiệu",
 									"Liên Hệ",
 									"Điều Khoản",
 									"Chính Sách Bảo Mật",
 								].map((item) => (
 									<button
 										key={item}
-										className='text-gray-500 hover:text-primary transition-colors'
+										className='cursor-pointer text-gray-500 hover:text-primary transition-colors text-left'
 									>
 										{item}
 									</button>
