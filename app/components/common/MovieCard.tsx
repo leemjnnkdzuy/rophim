@@ -1,17 +1,23 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 import Image from "next/image";
-import {useRouter} from "next/navigation";
-import {Badge} from "@/app/components/ui/badge";
-import {Star, Film} from "lucide-react";
-import {Movie} from "@/app/types/movie";
+import { useRouter } from "next/navigation";
+import { Badge } from "@/app/components/ui/badge";
+import { Star, Film, Play } from "lucide-react";
+import { Movie } from "@/app/types/movie";
 
 interface MovieCardProps {
 	movie: Movie;
+	preferBackdrop?: boolean;
 }
 
-export function MovieCard({movie}: MovieCardProps) {
+export function MovieCard({ movie, preferBackdrop = false }: MovieCardProps) {
 	const router = useRouter();
 	const [isHovered, setIsHovered] = useState(false);
+
+	// Determine which image to show
+	const imgSrc = preferBackdrop
+		? (movie.backdrop || movie.poster || "")
+		: (movie.poster || movie.backdrop || "");
 
 	return (
 		<div
@@ -24,16 +30,16 @@ export function MovieCard({movie}: MovieCardProps) {
 				onMouseLeave={() => setIsHovered(false)}
 			>
 				{/* Poster Placeholder */}
-				{movie.poster || movie.backdrop ?
+				{imgSrc ?
 					<Image
-						src={movie.poster || movie.backdrop || ""}
+						src={imgSrc}
 						alt={movie.title}
 						fill
 						sizes='220px'
 						unoptimized
 						className='object-cover transition-transform duration-500 group-hover:scale-110'
 					/>
-				:	<div className='absolute inset-0 bg-neutral-900 border border-white/10 flex items-center justify-center'>
+					: <div className='absolute inset-0 bg-neutral-900 border border-white/10 flex items-center justify-center'>
 						<div className='text-center p-3'>
 							<Film className='h-10 w-10 text-[#8ae4ff]/30 mx-auto mb-2' />
 							<p className='text-white/50 text-xs font-medium leading-tight'>
@@ -74,15 +80,14 @@ export function MovieCard({movie}: MovieCardProps) {
 				{movie.episode && (
 					<div className='absolute bottom-2 right-2 z-10'>
 						<Badge
-							className={`${
-								(
-									movie.episode
-										.toLowerCase()
-										.includes("hoàn thành")
-								) ?
-									"bg-green-600 hover:bg-green-700 text-white border-green-500"
-								:	"bg-black/60 hover:bg-black/70 text-white border-white/20"
-							} text-[10px] font-medium border px-2 py-0.5 backdrop-blur-md shadow-sm rounded-md transition-colors`}
+							className={`${(
+								movie.episode
+									.toLowerCase()
+									.includes("hoàn thành")
+							) ?
+								"bg-green-600 hover:bg-green-700 text-white border-green-500"
+								: "bg-black/60 hover:bg-black/70 text-white border-white/20"
+								} text-[10px] font-medium border px-2 py-0.5 backdrop-blur-md shadow-sm rounded-md transition-colors`}
 						>
 							{movie.episode}
 						</Badge>
@@ -91,28 +96,14 @@ export function MovieCard({movie}: MovieCardProps) {
 
 				{/* Hover Overlay */}
 				<div
-					className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity duration-300 ${
-						isHovered ? "opacity-100" : "opacity-0"
-					}`}
+					className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"
+						}`}
 				>
 					<div className='flex flex-col items-center gap-2'>
 						{/* Custom Play Button Style if needed, or simple div */}
 						<div className='w-12 h-12 rounded-full bg-[#8ae4ff]/90 flex items-center justify-center backdrop-blur-sm shadow-lg shadow-[#8ae4ff]/30 transform transition-transform duration-300 group-hover:scale-110'>
 							{/* Play icon inside */}
-							<svg
-								xmlns='http://www.w3.org/2000/svg'
-								width='20'
-								height='20'
-								viewBox='0 0 24 24'
-								fill='black'
-								stroke='black'
-								strokeWidth='2'
-								strokeLinecap='round'
-								strokeLinejoin='round'
-								className='ml-0.5'
-							>
-								<polygon points='6 3 20 12 6 21 6 3' />
-							</svg>
+							<Play className="ml-0.5 fill-black text-black" size={20} />
 						</div>
 						<span className='text-xs text-white/80 font-medium'>
 							Xem ngay

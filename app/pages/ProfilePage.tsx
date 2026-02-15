@@ -24,24 +24,12 @@ import { MovieCard } from "@/app/components/common/MovieCard";
 import { Movie } from "@/app/types/movie";
 import { AvatarCropDialog } from "@/app/components/common/AvatarCropDialog";
 
-interface SavedFilm {
-    slug: string;
-    name: string;
-    original_name?: string;
-    poster_url?: string;
-    thumb_url?: string;
-    quality?: string;
-    language?: string;
-    years?: { id: string; name: string }[];
-    formats?: { id: string; name: string }[];
-    total_episodes?: number;
-    current_episode?: string;
-}
+import { mapFilmToMovie, ApiMovieItem } from "@/app/utils/movieMapper";
 
 interface ProfileData {
     username: string;
     avatar: string;
-    savedFilms: SavedFilm[];
+    savedFilms: ApiMovieItem[];
     savedCount: number;
     showSavedFilms: boolean;
     isOwnProfile: boolean;
@@ -131,34 +119,7 @@ export default function ProfilePage({ identifier }: { identifier?: string }) {
         });
     };
 
-    const formatEpisode = (item: SavedFilm) => {
-        if (
-            item.formats?.some((f) => f.name === "Phim lẻ") ||
-            item.total_episodes === 1
-        )
-            return "";
 
-        const current = item.current_episode;
-        const total = item.total_episodes;
-
-        if (!current) return total ? `${total} Tập` : "";
-
-        const currentLower = current.toLowerCase();
-        if (
-            currentLower.includes("full") ||
-            currentLower.includes("hoàn tất")
-        ) {
-            return total ? `Hoàn Thành ${total} Tập` : "Hoàn Thành";
-        }
-
-        const num = parseInt(current.replace(/\D/g, ""));
-        if (!isNaN(num) && total && total > 0) {
-            return num >= total ?
-                `Hoàn Thành ${total} Tập`
-                : `Tập ${num}/${total}`;
-        }
-        return current;
-    };
 
     if (isLoading) {
         return (
@@ -358,29 +319,12 @@ export default function ProfilePage({ identifier }: { identifier?: string }) {
                 ) : (
                     /* Saved films grid */
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-                        {profile.savedFilms.map((film) => {
-                            const movieData: Movie = {
-                                id: film.slug,
-                                title: film.name,
-                                originalTitle: film.original_name || film.name,
-                                year: parseInt(film.years?.[0]?.name || "0"),
-                                rating: 0,
-                                quality: film.quality || "HD",
-                                episode: formatEpisode(film),
-                                poster:
-                                    film.thumb_url || film.poster_url || "",
-                                genre: [],
-                                duration: "",
-                                views: "",
-                                language: film.language || "",
-                                backdrop:
-                                    film.poster_url || film.thumb_url || "",
-                            };
-
+                        {profile.savedFilms.map((film, index) => {
                             return (
                                 <MovieCard
-                                    key={film.slug}
-                                    movie={movieData}
+                                    key={film.slug || index}
+                                    movie={mapFilmToMovie(film, index)}
+                                    preferBackdrop
                                 />
                             );
                         })}

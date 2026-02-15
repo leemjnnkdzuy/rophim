@@ -19,32 +19,9 @@ import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { Movie } from "@/app/types/movie";
 import api from "@/app/utils/axios";
+import { mapFilmToMovie, ApiMovieItem } from "@/app/utils/movieMapper";
 
 // ────── Interfaces ──────
-
-interface FilmRaw {
-    slug: string;
-    name: string;
-    original_name: string;
-    thumb_url: string;
-    poster_url: string;
-    created: string;
-    modified: string;
-    description: string;
-    total_episodes: number;
-    current_episode?: string;
-    time: string | null;
-    quality: string;
-    language: string;
-    director: string | null;
-    casts: string | null;
-    formats?: { id: string; name: string }[];
-    genres?: { id: string; name: string }[];
-    years?: { id: string; name: string }[];
-    countries?: { id: string; name: string }[];
-    rating?: number;
-    views?: number;
-}
 
 interface PaginationInfo {
     page: number;
@@ -56,63 +33,12 @@ interface PaginationInfo {
 }
 
 interface SeriesPageData {
-    trendingSeries: FilmRaw[];
-    newestByYear: FilmRaw[];
-    recentlyUploaded: FilmRaw[];
-    allSeries: FilmRaw[];
+    trendingSeries: ApiMovieItem[];
+    newestByYear: ApiMovieItem[];
+    recentlyUploaded: ApiMovieItem[];
+    allSeries: ApiMovieItem[];
     pagination: PaginationInfo;
 }
-
-function mapFilmToMovie(film: FilmRaw): Movie {
-    const year =
-        film.years && film.years.length > 0 && film.years[0].name
-            ? parseInt(film.years[0].name)
-            : film.created
-                ? new Date(film.created).getFullYear()
-                : new Date().getFullYear();
-
-    const formatEpisode = (item: FilmRaw) => {
-        const current = item.current_episode;
-        const total = item.total_episodes;
-
-        if (!current) return total ? `${total} Tập` : "";
-
-        const currentLower = current.toLowerCase();
-        if (currentLower.includes("full") || currentLower.includes("hoàn tất")) {
-            return total ? `Hoàn Thành ${total} Tập` : "Hoàn Thành";
-        }
-
-        const num = parseInt(current.replace(/\D/g, ""));
-        if (!isNaN(num) && total && total > 0) {
-            return num >= total ? `Hoàn Thành ${total} Tập` : `Tập ${num}/${total}`;
-        }
-        return current;
-    };
-
-    return {
-        id: film.slug,
-        title: film.name,
-        originalTitle: film.original_name,
-        year,
-        rating: film.rating || 0,
-        quality: film.quality || "HD",
-        poster: film.poster_url,
-        backdrop: film.thumb_url,
-        genre: film.genres?.map((g) => g.name) || [],
-        duration: film.time || "N/A",
-        views: film.views ? film.views.toLocaleString() : "0",
-        language: film.language,
-        description: film.description,
-        episode: formatEpisode(film),
-        isNew: true,
-    };
-}
-
-// Local TrendingCarousel removed. Imported from @/app/components/common/TrendingCarousel
-
-// ────────────────────────────────────────────
-// Newest — Simple Grid
-// ────────────────────────────────────────────
 
 function NewestSpotlight({ movies }: { movies: Movie[] }) {
     if (movies.length === 0) return null;
@@ -124,7 +50,7 @@ function NewestSpotlight({ movies }: { movies: Movie[] }) {
             />
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5">
                 {movies.map((movie) => (
-                    <MovieCard key={movie.id} movie={{ ...movie, poster: movie.backdrop || "", backdrop: movie.poster }} />
+                    <MovieCard key={movie.id} movie={movie} preferBackdrop />
                 ))}
             </div>
         </section>
@@ -145,7 +71,7 @@ function RecentlyUploadedSection({ movies }: { movies: Movie[] }) {
             />
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5">
                 {movies.map((movie) => (
-                    <MovieCard key={movie.id} movie={{ ...movie, poster: movie.backdrop || "", backdrop: movie.poster }} />
+                    <MovieCard key={movie.id} movie={movie} preferBackdrop />
                 ))}
             </div>
         </section>
@@ -301,10 +227,10 @@ export default function SeriesPage() {
 
             const data: SeriesPageData = response.data;
 
-            setTrendingSeries((data.trendingSeries || []).map(mapFilmToMovie));
-            setNewestByYear((data.newestByYear || []).map(mapFilmToMovie));
-            setRecentlyUploaded((data.recentlyUploaded || []).map(mapFilmToMovie));
-            setAllSeries((data.allSeries || []).map(mapFilmToMovie));
+            setTrendingSeries((data.trendingSeries || []).map((film) => mapFilmToMovie(film)));
+            setNewestByYear((data.newestByYear || []).map((film) => mapFilmToMovie(film)));
+            setRecentlyUploaded((data.recentlyUploaded || []).map((film) => mapFilmToMovie(film)));
+            setAllSeries((data.allSeries || []).map((film) => mapFilmToMovie(film)));
             setPagination(data.pagination || { page: 1, limit: 24, totalCount: 0, totalPages: 1, hasNext: false, hasPrev: false });
         } catch (error) {
             console.error("Failed to load series page data:", error);
@@ -322,7 +248,7 @@ export default function SeriesPage() {
 
             const data: SeriesPageData = response.data;
 
-            setAllSeries(data.allSeries.map(mapFilmToMovie));
+            setAllSeries(data.allSeries.map((film) => mapFilmToMovie(film)));
             setPagination(data.pagination);
             setCurrentPage(page);
 
@@ -433,7 +359,7 @@ export default function SeriesPage() {
                     <>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5">
                             {allSeries.map((movie) => (
-                                <MovieCard key={movie.id} movie={{ ...movie, poster: movie.backdrop || "", backdrop: movie.poster }} />
+                                <MovieCard key={movie.id} movie={movie} preferBackdrop />
                             ))}
                         </div>
                         <PaginationControls

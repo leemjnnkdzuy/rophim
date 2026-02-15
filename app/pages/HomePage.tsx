@@ -29,6 +29,7 @@ import { Movie, FeaturedMovie } from "@/app/types/movie";
 
 import { SectionTitle } from "@/app/components/common/SectionTitle";
 import { MovieCard } from "@/app/components/common/MovieCard";
+import { mapFilmToMovie, ApiMovieItem } from "@/app/utils/movieMapper";
 import { HeroCategorySection } from "@/app/components/common/HeroCategorySection";
 import { SplitCategorySection } from "@/app/components/common/SplitCategorySection";
 import { SingleMovieSection } from "@/app/components/common/SingleMovieSection";
@@ -95,102 +96,32 @@ export default function HomePage() {
 				setHasError(false);
 				const data = await fetchLatestFilmsFromDB();
 
-				const formatEpisode = (item: MovieItemWithStats) => {
-					// Nếu là phim lẻ -> không hiện tập
-					if (
-						item.formats?.some((f) => f.name === "Phim lẻ") ||
-						item.total_episodes === 1
-					)
-						return "";
 
-					const current = item.current_episode;
-					const total = item.total_episodes;
-
-					if (!current) return total ? `${total} Tập` : "";
-
-					// Xử lý các case hoàn thành
-					const currentLower = current.toLowerCase();
-					if (
-						currentLower.includes("full") ||
-						currentLower.includes("hoàn tất")
-					) {
-						return total ? `Hoàn Thành ${total} Tập` : "Hoàn Thành";
-					}
-
-					const num = parseInt(current.replace(/\D/g, ""));
-					// Nếu tập hiện tại >= tổng số tập -> Hoàn Thành
-					if (!isNaN(num) && total && total > 0) {
-						return num >= total ?
-							`Hoàn Thành ${total} Tập`
-							: `Tập ${num}/${total}`;
-					}
-					return current;
-				};
-
-				const mapToMovie = (
-					item: MovieItemWithStats,
-					idx: number,
-				): FeaturedMovie => ({
-					id: item.slug || idx + 1000,
-					title: item.name,
-					originalTitle: item.original_name,
-					year:
-						(
-							item.years &&
-							Array.isArray(item.years) &&
-							item.years.length > 0 &&
-							item.years[0].name
-						) ?
-							parseInt(item.years[0].name)
-							: item.created ? new Date(item.created).getFullYear()
-								: new Date().getFullYear(),
-					rating: item.rating || 0,
-					quality: item.quality,
-					poster: item.poster_url,
-					genre: item.genres?.map((g) => g.name) || ["Phim Mới"],
-					duration: item.time || "N/A",
-					views: item.views ? item.views.toLocaleString() : "New",
-					description: item.description,
-					backdrop: item.thumb_url,
-					episode: formatEpisode(item),
-					isNew: true,
-					language: item.language,
-				});
 
 				if (data) {
 					// 1. Hero / Featured (Latest Uploads)
-					const latest = (data.latestMovies || []).map(mapToMovie);
+					// We need to cast to FeaturedMovie because mapFilmToMovie returns Movie
+					const latest = (data.latestMovies || []).map((item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx)) as unknown as FeaturedMovie[];
 					if (latest.length > 0) setFeaturedMoviesData(latest);
 
 					// 2. Lists
-					// Override poster with thumb_url for specific categories as requested
 					const trending = (data.trendingMovies || []).map(
 						(item, idx) => ({
-							...mapToMovie(item, idx),
-							poster: item.thumb_url || item.poster_url,
+							...mapFilmToMovie(item as unknown as ApiMovieItem, idx),
 							isTrending: true,
 						}),
 					);
 
-					const china = (data.chinaMovies || []).map((item, idx) => ({
-						...mapToMovie(item, idx),
-						poster: item.thumb_url || item.poster_url,
-					}));
+					const china = (data.chinaMovies || []).map((item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx));
 
-					const korea = (data.koreaMovies || []).map((item, idx) => ({
-						...mapToMovie(item, idx),
-						poster: item.thumb_url || item.poster_url,
-					}));
+					const korea = (data.koreaMovies || []).map((item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx));
 
 					const western = (data.westernMovies || []).map(
-						(item, idx) => ({
-							...mapToMovie(item, idx),
-							poster: item.thumb_url || item.poster_url,
-						}),
+						(item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx),
 					);
-					const series = (data.seriesMovies || []).map(mapToMovie);
-					const single = (data.singleMovies || []).map(mapToMovie);
-					const cartoon = (data.cartoonMovies || []).map(mapToMovie);
+					const series = (data.seriesMovies || []).map((item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx));
+					const single = (data.singleMovies || []).map((item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx));
+					const cartoon = (data.cartoonMovies || []).map((item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx));
 					const genres = data.allGenres || [];
 
 					setCategoryMovies({
@@ -420,7 +351,7 @@ export default function HomePage() {
 				/>
 				<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5'>
 					{categoryMovies.trending.map((movie) => (
-						<MovieCard key={movie.id} movie={movie} />
+						<MovieCard key={movie.id} movie={movie} preferBackdrop />
 					))}
 				</div>
 			</section>
@@ -546,7 +477,7 @@ export default function HomePage() {
 					<TabsContent value='china' className='mt-0'>
 						<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5'>
 							{categoryMovies.china.map((movie) => (
-								<MovieCard key={movie.id} movie={movie} />
+								<MovieCard key={movie.id} movie={movie} preferBackdrop />
 							))}
 						</div>
 					</TabsContent>
@@ -554,7 +485,7 @@ export default function HomePage() {
 					<TabsContent value='korea' className='mt-0'>
 						<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5'>
 							{categoryMovies.korea.map((movie) => (
-								<MovieCard key={movie.id} movie={movie} />
+								<MovieCard key={movie.id} movie={movie} preferBackdrop />
 							))}
 						</div>
 					</TabsContent>
@@ -562,7 +493,7 @@ export default function HomePage() {
 					<TabsContent value='western' className='mt-0'>
 						<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5'>
 							{categoryMovies.western.map((movie) => (
-								<MovieCard key={movie.id} movie={movie} />
+								<MovieCard key={movie.id} movie={movie} preferBackdrop />
 							))}
 						</div>
 					</TabsContent>

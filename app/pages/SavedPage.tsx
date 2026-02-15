@@ -1,38 +1,23 @@
 "use client";
 
-import React, {useEffect, useMemo, useState} from "react";
-import {useRouter} from "next/navigation";
-import {Bookmark, Film, Loader2} from "lucide-react";
-import {SectionTitle} from "@/app/components/common/SectionTitle";
-import {MovieCard} from "@/app/components/common/MovieCard";
-import {Button} from "@/app/components/ui/button";
+import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Bookmark, Film, Loader2 } from "lucide-react";
+import { SectionTitle } from "@/app/components/common/SectionTitle";
+import { MovieCard } from "@/app/components/common/MovieCard";
+import { Button } from "@/app/components/ui/button";
 import api from "@/app/utils/axios";
-import {useAuth} from "@/app/hooks/useAuth";
-import {Movie} from "@/app/types/movie";
+import { useAuth } from "@/app/hooks/useAuth";
+import { Movie } from "@/app/types/movie";
+import { mapFilmToMovie, ApiMovieItem } from "@/app/utils/movieMapper";
 
-interface SavedFilm {
-	name: string;
-	slug: string;
-	original_name?: string;
-	poster_url?: string;
-	thumb_url?: string;
-	created?: string;
-	total_episodes?: number;
-	years?: {id: string; name: string}[];
-	rating?: number;
-	quality?: string;
-	language?: string;
-	current_episode?: string;
-	time?: string;
-	views?: number;
-	genres?: {id: string; name: string}[];
-}
+
 
 export default function SavedPage() {
 	const router = useRouter();
-	const {isAuthenticated, loading} = useAuth();
+	const { isAuthenticated, loading } = useAuth();
 	const [isFetching, setIsFetching] = useState(true);
-	const [savedFilms, setSavedFilms] = useState<SavedFilm[]>([]);
+	const [savedFilms, setSavedFilms] = useState<ApiMovieItem[]>([]);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -58,57 +43,8 @@ export default function SavedPage() {
 		fetchSaved();
 	}, [isAuthenticated, loading]);
 
-	const formatEpisode = (film: SavedFilm) => {
-		if (!film) return "";
-		if (film.total_episodes === 1) return "";
-
-		const current = film.current_episode || "";
-		const total = film.total_episodes || 0;
-
-		if (!current) return total ? `${total} Tập` : "";
-
-		const currentLower = current.toLowerCase();
-		if (
-			currentLower.includes("full") ||
-			currentLower.includes("hoàn tất")
-		) {
-			return total ? `Hoàn Thành ${total} Tập` : "Hoàn Thành";
-		}
-
-		const num = parseInt(current.replace(/\D/g, ""));
-		if (!isNaN(num) && total && total > 0) {
-			return num >= total ?
-					`Hoàn Thành ${total} Tập`
-				:	`Tập ${num}/${total}`;
-		}
-
-		return current;
-	};
-
 	const movies: Movie[] = useMemo(() => {
-		return savedFilms.map((film, index) => {
-			const yearValue =
-				film.years && film.years.length > 0 ?
-					parseInt(film.years[0].name)
-				: film.created ? new Date(film.created).getFullYear()
-				: new Date().getFullYear();
-
-			return {
-				id: film.slug || index,
-				title: film.name,
-				originalTitle: film.original_name || film.name,
-				year: isNaN(yearValue) ? new Date().getFullYear() : yearValue,
-				rating: film.rating || 0,
-				quality: film.quality || "HD",
-				episode: formatEpisode(film),
-				poster: film.thumb_url || film.poster_url || "",
-				genre: film.genres?.map((g) => g.name) || [],
-				duration: film.time || "N/A",
-				views: film.views ? film.views.toLocaleString() : "",
-				language: film.language || "",
-				description: "",
-			};
-		});
+		return savedFilms.map((film, index) => mapFilmToMovie(film, index));
 	}, [savedFilms]);
 
 	if (loading || isFetching) {
@@ -160,30 +96,30 @@ export default function SavedPage() {
 						Thử lại
 					</Button>
 				</div>
-			: movies.length === 0 ?
-				<div className='flex flex-col items-center justify-center gap-3 py-16 text-center'>
-					<div className='w-16 h-16 rounded-full bg-white/5 flex items-center justify-center'>
-						<Film className='h-8 w-8 text-white/30' />
+				: movies.length === 0 ?
+					<div className='flex flex-col items-center justify-center gap-3 py-16 text-center'>
+						<div className='w-16 h-16 rounded-full bg-white/5 flex items-center justify-center'>
+							<Film className='h-8 w-8 text-white/30' />
+						</div>
+						<h3 className='text-lg font-semibold text-white'>
+							Chưa có phim đã lưu
+						</h3>
+						<p className='text-sm text-gray-400'>
+							Lưu phim để xem lại sau.
+						</p>
+						<Button
+							variant='outline'
+							className='border-white/10 text-gray-300 hover:bg-white/10'
+							onClick={() => router.push("/")}
+						>
+							Khám phá phim mới
+						</Button>
 					</div>
-					<h3 className='text-lg font-semibold text-white'>
-						Chưa có phim đã lưu
-					</h3>
-					<p className='text-sm text-gray-400'>
-						Lưu phim để xem lại sau.
-					</p>
-					<Button
-						variant='outline'
-						className='border-white/10 text-gray-300 hover:bg-white/10'
-						onClick={() => router.push("/")}
-					>
-						Khám phá phim mới
-					</Button>
-				</div>
-			:	<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5'>
-					{movies.map((movie) => (
-						<MovieCard key={movie.id} movie={movie} />
-					))}
-				</div>
+					: <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5'>
+						{movies.map((movie) => (
+							<MovieCard key={movie.id} movie={movie} preferBackdrop />
+						))}
+					</div>
 			}
 		</section>
 	);

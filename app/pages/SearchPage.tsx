@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import api from "@/app/utils/axios";
 import { Movie } from "@/app/types/movie";
+import { mapFilmToMovie, ApiMovieItem } from "@/app/utils/movieMapper";
 
 // Filter options
 const SORT_OPTIONS = [
@@ -60,43 +61,7 @@ export default function SearchPage() {
 		fetchYears();
 	}, []);
 
-	// Format episode like HomePage
-	const formatEpisode = (film: Record<string, unknown>): string => {
-		// Nếu là phim lẻ -> không hiện tập
-		if (
-			(film.formats as Array<{ name: string }>)?.some(
-				(f) => f.name === "Phim lẻ",
-			) ||
-			(film.total_episodes as number) === 1
-		) {
-			return "";
-		}
 
-		const current = film.current_episode as string | undefined;
-		const total = (film.total_episodes as number) || 0;
-
-		if (!current) return total ? `${total} Tập` : "";
-
-		// Xử lý các case hoàn thành
-		const currentLower = current.toLowerCase();
-		if (
-			currentLower.includes("full") ||
-			currentLower.includes("hoàn tất")
-		) {
-			return total ? `Hoàn Thành ${total} Tập` : "Hoàn Thành";
-		}
-
-		const num = parseInt(current.replace(/\D/g, ""));
-		// Nếu tập hiện tại >= tổng số tập -> Hoàn Thành
-		if (!isNaN(num) && total && total > 0) {
-			return num >= total ?
-				`Hoàn Thành ${total} Tập`
-				: `Tập ${num}/${total}`;
-		}
-		return current;
-	};
-
-	// Search function
 	const handleSearch = useCallback(async (query: string) => {
 		if (!query.trim()) {
 			setMovies([]);
@@ -119,30 +84,7 @@ export default function SearchPage() {
 			});
 
 			const results: Movie[] =
-				response.data.films?.map((film: Record<string, unknown>) => ({
-					id: (film.slug as string) || "",
-					title: (film.name as string) || "",
-					originalTitle: (film.original_name as string) || "",
-					year:
-						(film.years as Array<{ name: string }>)?.[0]?.name ?
-							parseInt(
-								(film.years as Array<{ name: string }>)[0].name,
-							)
-							: new Date().getFullYear(),
-					rating: (film.rating as number) || 0,
-					quality: (film.quality as string) || "HD",
-					episode: formatEpisode(film),
-					backdrop: (film.thumb_url as string),
-					genre:
-						(film.genres as Array<{ name: string }>)?.map(
-							(g) => g.name,
-						) || [],
-					country: (film.countries as Array<{ name: string }>)?.[0]?.name || "",
-					duration: (film.time as string) || "N/A",
-					views: (film.views as number)?.toString() || "0",
-					language: (film.language as string) || "Vietsub",
-					description: (film.description as string) || "",
-				})) || [];
+				response.data.films?.map((film: Record<string, unknown>) => mapFilmToMovie(film as unknown as ApiMovieItem)) || [];
 
 			setMovies(results);
 			setFilteredMovies(results);
@@ -323,11 +265,11 @@ export default function SearchPage() {
 												}
 												variant='outline'
 												className={`border-white/10 rounded-lg transition-all ${(
-														selectedSort ===
-														option.value
-													) ?
-														"bg-[#8ae4ff]/20 border-[#8ae4ff]/50 text-[#8ae4ff]"
-														: "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+													selectedSort ===
+													option.value
+												) ?
+													"bg-[#8ae4ff]/20 border-[#8ae4ff]/50 text-[#8ae4ff]"
+													: "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
 													}`}
 											>
 												<Icon className='h-4 w-4 mr-2' />
@@ -376,11 +318,11 @@ export default function SearchPage() {
 														)
 													}
 													className={`cursor-pointer transition-all ${(
-															selectedCountry ===
-															country
-														) ?
-															"bg-[#8ae4ff] text-black border-[#8ae4ff]"
-															: "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+														selectedCountry ===
+														country
+													) ?
+														"bg-[#8ae4ff] text-black border-[#8ae4ff]"
+														: "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
 														}`}
 												>
 													{country}
@@ -402,8 +344,8 @@ export default function SearchPage() {
 														setSelectedYear(year)
 													}
 													className={`cursor-pointer transition-all ${selectedYear === year ?
-															"bg-[#8ae4ff] text-black border-[#8ae4ff]"
-															: "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+														"bg-[#8ae4ff] text-black border-[#8ae4ff]"
+														: "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
 														}`}
 												>
 													{year}
@@ -425,12 +367,12 @@ export default function SearchPage() {
 														toggleGenre(genre)
 													}
 													className={`cursor-pointer transition-all ${(
-															selectedGenres.includes(
-																genre,
-															)
-														) ?
-															"bg-[#8ae4ff] text-black border-[#8ae4ff]"
-															: "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+														selectedGenres.includes(
+															genre,
+														)
+													) ?
+														"bg-[#8ae4ff] text-black border-[#8ae4ff]"
+														: "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
 														}`}
 												>
 													{genre}

@@ -20,32 +20,10 @@ import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { Movie } from "@/app/types/movie";
 import api from "@/app/utils/axios";
+import { mapFilmToMovie, ApiMovieItem } from "@/app/utils/movieMapper";
 
 // ────── Interfaces ──────
 
-interface FilmRaw {
-    slug: string;
-    name: string;
-    original_name: string;
-    thumb_url: string;
-    poster_url: string;
-    created: string;
-    modified: string;
-    description: string;
-    total_episodes: number;
-    current_episode?: string;
-    time: string | null;
-    quality: string;
-    language: string;
-    director: string | null;
-    casts: string | null;
-    formats?: { id: string; name: string }[];
-    genres?: { id: string; name: string }[];
-    years?: { id: string; name: string }[];
-    countries?: { id: string; name: string }[];
-    rating?: number;
-    views?: number;
-}
 
 interface PaginationInfo {
     page: number;
@@ -57,38 +35,14 @@ interface PaginationInfo {
 }
 
 interface MoviePageData {
-    trendingMovies: FilmRaw[];
-    newestByYear: FilmRaw[];
-    recentlyUploaded: FilmRaw[];
-    allMovies: FilmRaw[];
+    trendingMovies: ApiMovieItem[];
+    newestByYear: ApiMovieItem[];
+    recentlyUploaded: ApiMovieItem[];
+    allMovies: ApiMovieItem[];
     pagination: PaginationInfo;
 }
 
-function mapFilmToMovie(film: FilmRaw): Movie {
-    const year =
-        film.years && film.years.length > 0 && film.years[0].name
-            ? parseInt(film.years[0].name)
-            : film.created
-                ? new Date(film.created).getFullYear()
-                : new Date().getFullYear();
 
-    return {
-        id: film.slug,
-        title: film.name,
-        originalTitle: film.original_name,
-        year,
-        rating: film.rating || 0,
-        quality: film.quality || "HD",
-        poster: film.poster_url,
-        backdrop: film.thumb_url,
-        genre: film.genres?.map((g) => g.name) || [],
-        duration: film.time || "N/A",
-        views: film.views ? film.views.toLocaleString() : "0",
-        language: film.language,
-        description: film.description,
-        isNew: true,
-    };
-}
 
 // Local TrendingCarousel removed. Imported from @/app/components/common/TrendingCarousel
 
@@ -106,7 +60,7 @@ function NewestSpotlight({ movies }: { movies: Movie[] }) {
             />
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5">
                 {movies.map((movie) => (
-                    <MovieCard key={movie.id} movie={{ ...movie, poster: movie.backdrop || "", backdrop: movie.poster }} />
+                    <MovieCard key={movie.id} movie={movie} preferBackdrop />
                 ))}
             </div>
         </section>
@@ -127,7 +81,7 @@ function RecentlyUploadedSection({ movies }: { movies: Movie[] }) {
             />
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5">
                 {movies.map((movie) => (
-                    <MovieCard key={movie.id} movie={{ ...movie, poster: movie.backdrop || "", backdrop: movie.poster }} />
+                    <MovieCard key={movie.id} movie={movie} preferBackdrop />
                 ))}
             </div>
         </section>
@@ -283,10 +237,10 @@ export default function MoviePage() {
 
             const data: MoviePageData = response.data;
 
-            setTrendingMovies((data.trendingMovies || []).map(mapFilmToMovie));
-            setNewestByYear((data.newestByYear || []).map(mapFilmToMovie));
-            setRecentlyUploaded((data.recentlyUploaded || []).map(mapFilmToMovie));
-            setAllMovies((data.allMovies || []).map(mapFilmToMovie));
+            setTrendingMovies((data.trendingMovies || []).map((film) => mapFilmToMovie(film)));
+            setNewestByYear((data.newestByYear || []).map((film) => mapFilmToMovie(film)));
+            setRecentlyUploaded((data.recentlyUploaded || []).map((film) => mapFilmToMovie(film)));
+            setAllMovies((data.allMovies || []).map((film) => mapFilmToMovie(film)));
             setPagination(data.pagination || { page: 1, limit: 24, totalCount: 0, totalPages: 1, hasNext: false, hasPrev: false });
         } catch (error) {
             console.error("Failed to load movie page data:", error);
@@ -304,7 +258,7 @@ export default function MoviePage() {
 
             const data: MoviePageData = response.data;
 
-            setAllMovies(data.allMovies.map(mapFilmToMovie));
+            setAllMovies(data.allMovies.map((film) => mapFilmToMovie(film)));
             setPagination(data.pagination);
             setCurrentPage(page);
 
@@ -415,7 +369,7 @@ export default function MoviePage() {
                     <>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5">
                             {allMovies.map((movie) => (
-                                <MovieCard key={movie.id} movie={{ ...movie, poster: movie.backdrop || "", backdrop: movie.poster }} />
+                                <MovieCard key={movie.id} movie={movie} preferBackdrop />
                             ))}
                         </div>
                         <PaginationControls

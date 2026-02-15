@@ -24,6 +24,7 @@ import {
 import api from "@/app/utils/axios";
 import { Movie } from "@/app/types/movie";
 import { LoadingScreen } from "@/app/components/common/LoadingScreen";
+import { mapFilmToMovie, ApiMovieItem } from "@/app/utils/movieMapper";
 
 // ─── Sort Options ───
 const SORT_OPTIONS = [
@@ -31,31 +32,6 @@ const SORT_OPTIONS = [
     { value: "rating", label: "Đánh giá", icon: Sparkles },
     { value: "latest", label: "Mới nhất", icon: Clock },
 ];
-
-// ─── Types ───
-interface FilmRaw {
-    slug: string;
-    name: string;
-    original_name: string;
-    thumb_url: string;
-    poster_url: string;
-    created: string;
-    modified: string;
-    description: string;
-    total_episodes: number;
-    current_episode?: string;
-    time: string | null;
-    quality: string;
-    language: string;
-    director: string | null;
-    casts: string | null;
-    formats?: { id: string; name: string }[];
-    genres?: { id: string; name: string }[];
-    years?: { id: string; name: string }[];
-    countries?: { id: string; name: string }[];
-    rating?: number;
-    views?: number;
-}
 
 interface PaginationInfo {
     page: number;
@@ -66,60 +42,8 @@ interface PaginationInfo {
     hasPrev: boolean;
 }
 
-// ─── Helpers ───
-function formatEpisode(film: FilmRaw): string {
-    if (
-        film.formats?.some((f) => f.name === "Phim lẻ") ||
-        film.total_episodes === 1
-    ) {
-        return "";
-    }
+// ─── Types ───
 
-    const current = film.current_episode;
-    const total = film.total_episodes || 0;
-
-    if (!current) return total ? `${total} Tập` : "";
-
-    const currentLower = current.toLowerCase();
-    if (currentLower.includes("full") || currentLower.includes("hoàn tất")) {
-        return total ? `Hoàn Thành ${total} Tập` : "Hoàn Thành";
-    }
-
-    const num = parseInt(current.replace(/\D/g, ""));
-    if (!isNaN(num) && total && total > 0) {
-        return num >= total
-            ? `Hoàn Thành ${total} Tập`
-            : `Tập ${num}/${total}`;
-    }
-    return current;
-}
-
-function mapFilmToMovie(film: FilmRaw): Movie {
-    const year =
-        film.years && film.years.length > 0 && film.years[0].name
-            ? parseInt(film.years[0].name)
-            : film.created
-                ? new Date(film.created).getFullYear()
-                : new Date().getFullYear();
-
-    return {
-        id: film.slug,
-        title: film.name,
-        originalTitle: film.original_name,
-        year,
-        rating: film.rating || 0,
-        quality: film.quality || "HD",
-        episode: formatEpisode(film),
-        backdrop: film.poster_url,
-        poster: film.thumb_url,
-        genre: film.genres?.map((g) => g.name) || [],
-        country: film.countries?.[0]?.name || "",
-        duration: film.time || "N/A",
-        views: film.views ? film.views.toLocaleString() : "0",
-        language: film.language,
-        description: film.description,
-    };
-}
 
 // ─── Pagination Controls ───
 function PaginationControls({
@@ -349,7 +273,7 @@ export default function GenresFilterPage({
                 const data = response.data;
 
                 const mappedMovies: Movie[] = (data.films || []).map(
-                    (film: FilmRaw) => mapFilmToMovie(film),
+                    (film: ApiMovieItem) => mapFilmToMovie(film),
                 );
 
                 setMovies(mappedMovies);
@@ -638,6 +562,7 @@ export default function GenresFilterPage({
                                     <MovieCard
                                         key={movie.id}
                                         movie={movie}
+                                        preferBackdrop
                                     />
                                 ))}
                             </div>
