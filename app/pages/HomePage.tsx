@@ -504,7 +504,7 @@ export default function HomePage() {
 			<SplitCategorySection
 				movies={categoryMovies.cartoon}
 				title='Phim Hoạt Hình'
-				href='/the-loai/hoat-hinh'
+				href='/the-loai/hoạt-hình'
 			/>
 
 			{/* Phim Lẻ Mới Section - Cinema Showcase */}
