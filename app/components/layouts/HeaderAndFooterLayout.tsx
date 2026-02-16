@@ -632,18 +632,18 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 								>
 									Giới Thiệu
 								</button>
-								{[
-									"Liên Hệ",
-									"Điều Khoản",
-									"Chính Sách Bảo Mật",
-								].map((item) => (
-									<button
-										key={item}
-										className='cursor-pointer text-gray-500 hover:text-primary transition-colors text-left'
-									>
-										{item}
-									</button>
-								))}
+								<button
+									onClick={() => router.push("/terms")}
+									className='cursor-pointer text-gray-500 hover:text-primary transition-colors text-left'
+								>
+									Điều Khoản
+								</button>
+								<button
+									onClick={() => router.push("/policy")}
+									className='cursor-pointer text-gray-500 hover:text-primary transition-colors text-left'
+								>
+									Chính Sách Bảo Mật
+								</button>
 							</div>
 						</div>
 					</div>

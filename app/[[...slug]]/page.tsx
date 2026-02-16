@@ -32,7 +32,9 @@ import MainDashboards from "@/app/Dashboards/MainDashboards";
 import MembersDashboards from "@/app/Dashboards/MembersDashboards";
 import FilmsDashboards from "@/app/Dashboards/FilmsDashboards";
 import CommentsDashboards from "@/app/Dashboards/CommentsDashboards";
-import IntroductionPage from "@/app/pages/IntroductionPage"; // Import IntroductionPage
+import IntroductionPage from "@/app/pages/IntroductionPage";
+import PolicyPage from "@/app/pages/PolicyPage";
+import TermsPage from "@/app/pages/TermsPage";
 import { fetchFilmDetail } from "@/app/services/movieService";
 
 interface RouteConfig {
@@ -200,6 +202,20 @@ const routes: RouteConfig[] = [
 	{
 		path: "/introduction",
 		component: IntroductionPage,
+		layout: NothingLayout,
+		isPrivate: false,
+		isDynamic: false,
+	},
+	{
+		path: "/policy",
+		component: PolicyPage,
+		layout: NothingLayout,
+		isPrivate: false,
+		isDynamic: false,
+	},
+	{
+		path: "/terms",
+		component: TermsPage,
 		layout: NothingLayout,
 		isPrivate: false,
 		isDynamic: false,
