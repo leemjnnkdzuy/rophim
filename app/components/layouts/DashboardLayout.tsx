@@ -2,9 +2,9 @@
 
 import React from "react";
 import Image from "next/image";
-import {useRouter, usePathname} from "next/navigation";
-import {icon} from "@/app/assets";
-import {useAuth} from "@/app/hooks/useAuth";
+import { useRouter, usePathname } from "next/navigation";
+import { icon } from "@/app/assets";
+import { useAuth } from "@/app/hooks/useAuth";
 import {
 	Sidebar,
 	SidebarContent,
@@ -50,12 +50,17 @@ const sidebarNavItems = [
 		href: "/admin/comments",
 		icon: MessageSquare,
 	},
+	{
+		title: "Nội dung trang ",
+		href: "/admin/content",
+		icon: Film,
+	}
 ];
 
 function AppSidebar() {
 	const router = useRouter();
 	const pathname = usePathname();
-	const {user, logout} = useAuth();
+	const { user, logout } = useAuth();
 
 	const currentPath =
 		"/" +
@@ -106,11 +111,10 @@ function AppSidebar() {
 										isActive={currentPath === item.href}
 										onClick={() => router.push(item.href)}
 										tooltip={item.title}
-										className={`transition-colors ${
-											currentPath === item.href ?
+										className={`transition-colors ${currentPath === item.href ?
 												"bg-primary/10 text-primary font-medium"
-											:	"text-gray-300 hover:text-white hover:bg-white/5"
-										}`}
+												: "text-gray-300 hover:text-white hover:bg-white/5"
+											}`}
 									>
 										<item.icon className='h-4 w-4' />
 										<span>{item.title}</span>
@@ -120,49 +124,18 @@ function AppSidebar() {
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
-
-				<SidebarGroup>
-					<SidebarGroupLabel className='text-gray-400 text-xs uppercase tracking-wider'>
-						Khác
-					</SidebarGroupLabel>
-					<SidebarGroupContent>
-						<SidebarMenu>
-							<SidebarMenuItem>
-								<SidebarMenuButton
-									onClick={() => router.push("/")}
-									tooltip='Về trang chủ'
-									className='text-gray-300 hover:text-white hover:bg-white/5'
-								>
-									<ArrowLeft className='h-4 w-4' />
-									<span>Về trang chủ</span>
-								</SidebarMenuButton>
-							</SidebarMenuItem>
-						</SidebarMenu>
-					</SidebarGroupContent>
-				</SidebarGroup>
 			</SidebarContent>
 
 			<SidebarFooter className='border-t border-white/5'>
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<SidebarMenuButton
-							onClick={() => router.push("/profile")}
-							tooltip={user?.username || "Tài khoản"}
+							onClick={() => router.push("/")}
+							tooltip='Về trang chủ'
 							className='text-gray-300 hover:text-white hover:bg-white/5'
 						>
-							{user?.avatar ?
-								<Image
-									src={user.avatar}
-									alt={user.username || "User"}
-									width={24}
-									height={24}
-									unoptimized
-									className='h-6 w-6 rounded-full object-cover border border-white/10'
-								/>
-							:	<User className='h-4 w-4' />}
-							<span className='truncate'>
-								{user?.username || "Admin"}
-							</span>
+							<ArrowLeft className='h-4 w-4' />
+							<span>Về trang chủ</span>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 					<SidebarMenuItem>

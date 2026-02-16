@@ -88,7 +88,6 @@ export default function CommentsDashboards() {
 			<div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
 				<div>
 					<h1 className='text-2xl font-bold text-white flex items-center gap-2'>
-						<MessageSquare className='h-6 w-6 text-primary' />
 						Quản lý bình luận
 					</h1>
 					<p className='text-sm text-gray-400 mt-1'>
