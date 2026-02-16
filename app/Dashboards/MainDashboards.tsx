@@ -8,6 +8,7 @@ import {
 	MessageSquare,
 	TrendingUp,
 	Eye,
+	Home,
 } from "lucide-react";
 
 interface StatCardProps {
@@ -108,10 +109,10 @@ export default function MainDashboards() {
 							description: "Duyệt và quản lý bình luận",
 						},
 						{
-							title: "Tổng quan",
-							href: "/admin",
-							icon: <LayoutDashboard className='h-5 w-5' />,
-							description: "Xem thống kê tổng quan hệ thống",
+							title: "Nội dung trang chủ",
+							href: "/admin/home-content",
+							icon: <Home className='h-5 w-5' />,
+							description: "Chọn phim nổi bật và tạo danh mục",
 						},
 					].map((item) => (
 						<a

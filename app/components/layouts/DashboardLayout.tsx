@@ -2,9 +2,9 @@
 
 import React from "react";
 import Image from "next/image";
-import { useRouter, usePathname } from "next/navigation";
-import { icon } from "@/app/assets";
-import { useAuth } from "@/app/hooks/useAuth";
+import {useRouter, usePathname} from "next/navigation";
+import {icon} from "@/app/assets";
+import {useAuth} from "@/app/hooks/useAuth";
 import {
 	Sidebar,
 	SidebarContent,
@@ -26,7 +26,7 @@ import {
 	MessageSquare,
 	LogOut,
 	ArrowLeft,
-	User,
+	Home,
 } from "lucide-react";
 
 const sidebarNavItems = [
@@ -52,15 +52,15 @@ const sidebarNavItems = [
 	},
 	{
 		title: "Nội dung trang ",
-		href: "/admin/content",
-		icon: Film,
-	}
+		href: "/admin/home-content",
+		icon: Home,
+	},
 ];
 
 function AppSidebar() {
 	const router = useRouter();
 	const pathname = usePathname();
-	const { user, logout } = useAuth();
+	const {logout} = useAuth();
 
 	const currentPath =
 		"/" +
@@ -111,10 +111,11 @@ function AppSidebar() {
 										isActive={currentPath === item.href}
 										onClick={() => router.push(item.href)}
 										tooltip={item.title}
-										className={`transition-colors ${currentPath === item.href ?
+										className={`transition-colors ${
+											currentPath === item.href ?
 												"bg-primary/10 text-primary font-medium"
-												: "text-gray-300 hover:text-white hover:bg-white/5"
-											}`}
+											:	"text-gray-300 hover:text-white hover:bg-white/5"
+										}`}
 									>
 										<item.icon className='h-4 w-4' />
 										<span>{item.title}</span>

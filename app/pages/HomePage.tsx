@@ -1,20 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, {useState, useEffect, useRef} from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Button } from "@/app/components/ui/button";
-import { Badge } from "@/app/components/ui/badge";
+import {useRouter} from "next/navigation";
+import {Button} from "@/app/components/ui/button";
+import {Badge} from "@/app/components/ui/badge";
 import {
 	Play,
 	Star,
 	Clock,
-	TrendingUp,
 	ChevronRight,
 	Eye,
 	Flame,
-	Zap,
 	ChevronLeft,
 	Film,
 } from "lucide-react";
@@ -24,16 +22,19 @@ import {
 	TabsList,
 	TabsTrigger,
 } from "@/app/components/ui/tabs";
-import { fetchLatestFilmsFromDB, MovieItem } from "@/app/services/movieService";
-import { Movie, FeaturedMovie } from "@/app/types/movie";
+import {
+	fetchLatestFilmsFromDB,
+	CategoryCard,
+} from "@/app/services/movieService";
+import {Movie, FeaturedMovie} from "@/app/types/movie";
 
-import { SectionTitle } from "@/app/components/common/SectionTitle";
-import { MovieCard } from "@/app/components/common/MovieCard";
-import { mapFilmToMovie, ApiMovieItem } from "@/app/utils/movieMapper";
-import { HeroCategorySection } from "@/app/components/common/HeroCategorySection";
-import { SplitCategorySection } from "@/app/components/common/SplitCategorySection";
-import { SingleMovieSection } from "@/app/components/common/SingleMovieSection";
-import { LoadingScreen } from "@/app/components/common/LoadingScreen";
+import {SectionTitle} from "@/app/components/common/SectionTitle";
+import {MovieCard} from "@/app/components/common/MovieCard";
+import {mapFilmToMovie, ApiMovieItem} from "@/app/utils/movieMapper";
+import {HeroCategorySection} from "@/app/components/common/HeroCategorySection";
+import {SplitCategorySection} from "@/app/components/common/SplitCategorySection";
+import {SingleMovieSection} from "@/app/components/common/SingleMovieSection";
+import {LoadingScreen} from "@/app/components/common/LoadingScreen";
 
 // --- Main Page ---
 
@@ -64,18 +65,13 @@ export default function HomePage() {
 		cartoon: [],
 		genres: [],
 	});
+	const [categoryCards, setCategoryCards] = useState<CategoryCard[]>([]);
 
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-	type MovieItemWithStats = MovieItem & {
-		rating?: number;
-		views?: number;
-		current_episode?: string;
-	};
-
 	const scroll = (direction: "left" | "right") => {
 		if (scrollContainerRef.current) {
-			const scrollAmount = 300; // Adjust as needed
+			const scrollAmount = 300;
 			if (direction === "left") {
 				scrollContainerRef.current.scrollBy({
 					left: -scrollAmount,
@@ -96,32 +92,53 @@ export default function HomePage() {
 				setHasError(false);
 				const data = await fetchLatestFilmsFromDB();
 
-
-
 				if (data) {
 					// 1. Hero / Featured (Latest Uploads)
 					// We need to cast to FeaturedMovie because mapFilmToMovie returns Movie
-					const latest = (data.latestMovies || []).map((item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx)) as unknown as FeaturedMovie[];
+					const latest = (data.latestMovies || []).map((item, idx) =>
+						mapFilmToMovie(item as unknown as ApiMovieItem, idx),
+					) as unknown as FeaturedMovie[];
 					if (latest.length > 0) setFeaturedMoviesData(latest);
 
 					// 2. Lists
 					const trending = (data.trendingMovies || []).map(
 						(item, idx) => ({
-							...mapFilmToMovie(item as unknown as ApiMovieItem, idx),
+							...mapFilmToMovie(
+								item as unknown as ApiMovieItem,
+								idx,
+							),
 							isTrending: true,
 						}),
 					);
 
-					const china = (data.chinaMovies || []).map((item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx));
+					const china = (data.chinaMovies || []).map((item, idx) =>
+						mapFilmToMovie(item as unknown as ApiMovieItem, idx),
+					);
 
-					const korea = (data.koreaMovies || []).map((item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx));
+					const korea = (data.koreaMovies || []).map((item, idx) =>
+						mapFilmToMovie(item as unknown as ApiMovieItem, idx),
+					);
 
 					const western = (data.westernMovies || []).map(
-						(item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx),
+						(item, idx) =>
+							mapFilmToMovie(
+								item as unknown as ApiMovieItem,
+								idx,
+							),
 					);
-					const series = (data.seriesMovies || []).map((item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx));
-					const single = (data.singleMovies || []).map((item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx));
-					const cartoon = (data.cartoonMovies || []).map((item, idx) => mapFilmToMovie(item as unknown as ApiMovieItem, idx));
+					const series = (data.seriesMovies || []).map((item, idx) =>
+						mapFilmToMovie(item as unknown as ApiMovieItem, idx),
+					);
+					const single = (data.singleMovies || []).map((item, idx) =>
+						mapFilmToMovie(item as unknown as ApiMovieItem, idx),
+					);
+					const cartoon = (data.cartoonMovies || []).map(
+						(item, idx) =>
+							mapFilmToMovie(
+								item as unknown as ApiMovieItem,
+								idx,
+							),
+					);
 					const genres = data.allGenres || [];
 
 					setCategoryMovies({
@@ -134,6 +151,11 @@ export default function HomePage() {
 						cartoon,
 						genres,
 					});
+
+					// Lấy category cards từ home content
+					if (data.homeContent?.categoryCards) {
+						setCategoryCards(data.homeContent.categoryCards);
+					}
 				}
 			} catch (error) {
 				console.error(
@@ -167,8 +189,12 @@ export default function HomePage() {
 		return (
 			<div className='min-h-[60vh] flex flex-col items-center justify-center gap-4'>
 				<Film className='h-16 w-16 text-gray-600' />
-				<h2 className='text-xl font-semibold text-white'>Không thể tải dữ liệu</h2>
-				<p className='text-gray-400 text-sm'>Đã xảy ra lỗi khi tải dữ liệu phim. Vui lòng thử lại.</p>
+				<h2 className='text-xl font-semibold text-white'>
+					Không thể tải dữ liệu
+				</h2>
+				<p className='text-gray-400 text-sm'>
+					Đã xảy ra lỗi khi tải dữ liệu phim. Vui lòng thử lại.
+				</p>
 				<Button
 					onClick={() => window.location.reload()}
 					className='bg-primary hover:bg-primary/90 text-black rounded-full px-6 font-semibold cursor-pointer'
@@ -308,7 +334,7 @@ export default function HomePage() {
 											unoptimized
 											className='object-cover'
 										/>
-										: <div className='absolute inset-0 bg-neutral-900/60 flex items-center justify-center'>
+									:	<div className='absolute inset-0 bg-neutral-900/60 flex items-center justify-center'>
 											<div className='text-center'>
 												<Film className='h-16 w-16 text-white/20 mx-auto mb-3' />
 												<p className='text-white/40 text-sm font-medium'>
@@ -332,10 +358,10 @@ export default function HomePage() {
 							<button
 								key={index}
 								onClick={() => setCurrentSlide(index)}
-								className={`h-1.5 rounded-full transition-all duration-300 ${currentSlide === index ? "w-8 bg-primary" : (
-									"w-2 bg-white/20 hover:bg-white/40"
-								)
-									}`}
+								className={`h-1.5 rounded-full transition-all duration-300 ${
+									currentSlide === index ? "w-8 bg-primary"
+									:	"w-2 bg-white/20 hover:bg-white/40"
+								}`}
 								aria-label={`Go to slide ${index + 1}`}
 							/>
 						))}
@@ -345,22 +371,21 @@ export default function HomePage() {
 
 			{/* Trending Section */}
 			<section className='w-full px-4 lg:px-32 py-10'>
-				<SectionTitle
-					title='Phim Thịnh Hành'
-					href='/thinh-hanh'
-				/>
+				<SectionTitle title='Phim Thịnh Hành' href='/thinh-hanh' />
 				<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5'>
 					{categoryMovies.trending.map((movie) => (
-						<MovieCard key={movie.id} movie={movie} preferBackdrop />
+						<MovieCard
+							key={movie.id}
+							movie={movie}
+							preferBackdrop
+						/>
 					))}
 				</div>
 			</section>
 
 			{/* Categories Quick Access */}
 			<section className='w-full px-4 lg:px-32 py-10 relative group'>
-				<SectionTitle
-					title='Khám Phá Theo Thể Loại'
-				/>
+				<SectionTitle title='Khám Phá Theo Thể Loại' />
 
 				<div className='relative'>
 					{/* Navigation Buttons */}
@@ -436,6 +461,62 @@ export default function HomePage() {
 				</div>
 			</section>
 
+			{/* Danh Mục Nổi Bật - Category Cards */}
+			{categoryCards.length > 0 && (
+				<section className='w-full px-4 lg:px-32 py-10'>
+					<SectionTitle title='Danh Mục Nổi Bật' />
+					<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5'>
+						{categoryCards.map((card) => (
+							<Link
+								key={card._id}
+								href={card.href}
+								className='group relative overflow-hidden rounded-2xl h-[140px] sm:h-[130px] transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-black/30'
+							>
+								{/* Background */}
+								{card.bgImage ?
+									<div className='absolute inset-0'>
+										<Image
+											src={card.bgImage}
+											alt={card.title}
+											fill
+											sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+											className='object-cover transition-transform duration-500 group-hover:scale-110'
+											unoptimized
+										/>
+										<div className='absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent' />
+									</div>
+								:	<div
+										className='absolute inset-0'
+										style={{
+											backgroundColor:
+												card.color || "#E8D5FF",
+										}}
+									>
+										<div className='absolute inset-0 bg-gradient-to-br from-white/20 to-transparent' />
+									</div>
+								}
+
+								{/* Content */}
+								<div className='relative h-full flex flex-col justify-center px-6'>
+									<h3 className='text-xl font-bold text-white drop-shadow-lg leading-tight'>
+										{card.title}
+									</h3>
+									<div className='mt-2 flex items-center gap-2'>
+										<span className='text-sm text-white/70 group-hover:text-white transition-colors'>
+											Khám phá ngay
+										</span>
+										<ChevronRight className='h-4 w-4 text-white/70 group-hover:text-white group-hover:translate-x-1 transition-all' />
+									</div>
+								</div>
+
+								{/* Hover overlay */}
+								<div className='absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
+							</Link>
+						))}
+					</div>
+				</section>
+			)}
+
 			{/* Phim Bộ Mới Section - Premium */}
 			<HeroCategorySection
 				movies={categoryMovies.series}
@@ -477,7 +558,11 @@ export default function HomePage() {
 					<TabsContent value='china' className='mt-0'>
 						<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5'>
 							{categoryMovies.china.map((movie) => (
-								<MovieCard key={movie.id} movie={movie} preferBackdrop />
+								<MovieCard
+									key={movie.id}
+									movie={movie}
+									preferBackdrop
+								/>
 							))}
 						</div>
 					</TabsContent>
@@ -485,7 +570,11 @@ export default function HomePage() {
 					<TabsContent value='korea' className='mt-0'>
 						<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5'>
 							{categoryMovies.korea.map((movie) => (
-								<MovieCard key={movie.id} movie={movie} preferBackdrop />
+								<MovieCard
+									key={movie.id}
+									movie={movie}
+									preferBackdrop
+								/>
 							))}
 						</div>
 					</TabsContent>
@@ -493,7 +582,11 @@ export default function HomePage() {
 					<TabsContent value='western' className='mt-0'>
 						<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5'>
 							{categoryMovies.western.map((movie) => (
-								<MovieCard key={movie.id} movie={movie} preferBackdrop />
+								<MovieCard
+									key={movie.id}
+									movie={movie}
+									preferBackdrop
+								/>
 							))}
 						</div>
 					</TabsContent>

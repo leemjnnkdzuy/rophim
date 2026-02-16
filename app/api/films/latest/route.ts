@@ -1,17 +1,65 @@
 import {NextResponse} from "next/server";
 import connectDatabase from "@/app/utils/connectDB";
 import Film from "@/app/models/Film";
+import HomeContent from "@/app/models/HomeContent";
 import axios from "axios";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+// Interface for lean Film documents
+interface FilmDocument {
+	slug: string;
+	name: string;
+	poster_url: string;
+	thumb_url: string;
+	modified: Date;
+	public: boolean;
+	[key: string]: unknown;
+}
+
 export async function GET() {
 	try {
 		await connectDatabase();
 
+		// Lấy danh sách phim nổi bật do admin chọn
+		const homeContent = await HomeContent.findOne()
+			.select("featuredFilmSlugs")
+			.lean();
+		const adminSlugs = homeContent?.featuredFilmSlugs || [];
+
+		// Lấy phim admin chọn trước
+		let adminFeatured: FilmDocument[] = [];
+		if (adminSlugs.length > 0) {
+			const adminFilms = (await Film.find({
+				slug: {$in: adminSlugs},
+				public: true,
+			}).lean()) as unknown as FilmDocument[];
+			// Sắp xếp theo thứ tự admin đã chọn
+			adminFeatured = adminSlugs
+				.map((slug: string) =>
+					adminFilms.find((f: FilmDocument) => f.slug === slug),
+				)
+				.filter((f): f is FilmDocument => f !== undefined);
+		}
+
+		// Auto-fill nếu chưa đủ 5 phim
+		const remainingCount = 5 - adminFeatured.length;
+		let autoFillMovies: FilmDocument[] = [];
+		if (remainingCount > 0) {
+			const excludeSlugs = adminFeatured.map((f: FilmDocument) => f.slug);
+			autoFillMovies = (await Film.find({
+				public: true,
+				slug: {$nin: excludeSlugs},
+			})
+				.sort({modified: -1})
+				.limit(remainingCount)
+				.lean()) as unknown as FilmDocument[];
+		}
+
+		const latestMoviesCombined = [...adminFeatured, ...autoFillMovies];
+
 		const [
-			latestMovies,
 			trendingMovies,
 			chinaMovies,
 			koreaMovies,
@@ -20,9 +68,6 @@ export async function GET() {
 			singleMovies,
 			cartoonMovies,
 		] = await Promise.all([
-			// 1. 5 phim mới upload (cho slider)
-			Film.find({public: true}).sort({modified: -1}).limit(5).lean(),
-
 			// 2. 6 phim có view cao (Trending)
 			Film.find({public: true}).sort({views: -1}).limit(6).lean(),
 
@@ -94,11 +139,15 @@ export async function GET() {
 		};
 
 		// Enrich: Gắn current_episode cho danh sách phim
-		const enrichWithEpisode = async (movies: any[]) => {
+		const enrichWithEpisode = async (movies: unknown[]) => {
 			const results = await Promise.all(
 				movies.map(async (movie) => {
-					const currentEp = await fetchCurrentEpisode(movie.slug);
-					return {...movie, current_episode: currentEp || undefined};
+					const filmDoc = movie as FilmDocument;
+					const currentEp = await fetchCurrentEpisode(filmDoc.slug);
+					return {
+						...filmDoc,
+						current_episode: currentEp || undefined,
+					};
 				}),
 			);
 			return results;
@@ -114,14 +163,14 @@ export async function GET() {
 			enrichedWesternMovies,
 			enrichedSingleMovies,
 		] = await Promise.all([
-			enrichWithEpisode(latestMovies),
-			enrichWithEpisode(trendingMovies),
-			enrichWithEpisode(seriesMovies),
-			enrichWithEpisode(cartoonMovies),
-			enrichWithEpisode(chinaMovies),
-			enrichWithEpisode(koreaMovies),
-			enrichWithEpisode(westernMovies),
-			enrichWithEpisode(singleMovies),
+			enrichWithEpisode(latestMoviesCombined),
+			enrichWithEpisode(trendingMovies as unknown[]),
+			enrichWithEpisode(seriesMovies as unknown[]),
+			enrichWithEpisode(cartoonMovies as unknown[]),
+			enrichWithEpisode(chinaMovies as unknown[]),
+			enrichWithEpisode(koreaMovies as unknown[]),
+			enrichWithEpisode(westernMovies as unknown[]),
+			enrichWithEpisode(singleMovies as unknown[]),
 		]);
 
 		const films = {

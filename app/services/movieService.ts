@@ -14,10 +14,24 @@ export interface MovieItem {
 	language: string;
 	director: string | null;
 	casts: string | null;
-	formats?: { id: string; name: string }[];
-	genres?: { id: string; name: string }[];
-	years?: { id: string; name: string }[];
-	countries?: { id: string; name: string }[];
+	formats?: {id: string; name: string}[];
+	genres?: {id: string; name: string}[];
+	years?: {id: string; name: string}[];
+	countries?: {id: string; name: string}[];
+}
+
+export interface CategoryCard {
+	_id: string;
+	title: string;
+	bgImage: string;
+	href: string;
+	color: string;
+	order: number;
+}
+
+export interface HomeContentData {
+	featuredFilmSlugs: string[];
+	categoryCards: CategoryCard[];
 }
 
 export interface CategoryMovies {
@@ -30,10 +44,11 @@ export interface CategoryMovies {
 	singleMovies: MovieItem[];
 	cartoonMovies: MovieItem[];
 	allGenres: string[];
+	homeContent?: HomeContentData;
 }
 
 import api from "@/app/utils/axios";
-import { AxiosError } from "axios";
+import {AxiosError} from "axios";
 
 function getErrorMessage(error: unknown): string {
 	if (error instanceof AxiosError) {
@@ -50,10 +65,12 @@ export const fetchLatestFilmsFromDB = async (): Promise<CategoryMovies> => {
 		const results = await Promise.allSettled([
 			api.get("/films/latest"),
 			api.get("/genres"),
+			api.get("/home-content"),
 		]);
 
 		const filmsResult = results[0];
 		const genresResult = results[1];
+		const homeContentResult = results[2];
 
 		if (filmsResult.status === "rejected") {
 			throw filmsResult.reason;
@@ -61,13 +78,16 @@ export const fetchLatestFilmsFromDB = async (): Promise<CategoryMovies> => {
 
 		const filmsData = filmsResult.value.data;
 		const genresData =
-			genresResult.status === "fulfilled"
-				? genresResult.value.data
-				: [];
+			genresResult.status === "fulfilled" ? genresResult.value.data : [];
+		const homeContentData =
+			homeContentResult.status === "fulfilled" ?
+				homeContentResult.value.data
+			:	{featuredFilmSlugs: [], categoryCards: []};
 
 		return {
 			...filmsData,
 			allGenres: genresData,
+			homeContent: homeContentData,
 		};
 	} catch (error: unknown) {
 		console.error(
@@ -91,8 +111,8 @@ export interface EpisodeServer {
 }
 
 export interface CategoryGroup {
-	group: { id: string; name: string };
-	list: { id: string; name: string }[];
+	group: {id: string; name: string};
+	list: {id: string; name: string}[];
 }
 
 export interface FilmDetail {
@@ -157,7 +177,7 @@ export const fetchFilmDetail = async (slug: string): Promise<FilmDetail> => {
 
 export const incrementView = async (slug: string): Promise<void> => {
 	try {
-		await api.post("/films/view", { slug });
+		await api.post("/films/view", {slug});
 	} catch (error: unknown) {
 		console.error("Error incrementing view:", getErrorMessage(error));
 	}

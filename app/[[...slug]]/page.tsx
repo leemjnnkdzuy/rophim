@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
+import {notFound} from "next/navigation";
+import type {Metadata} from "next";
 
 import HeaderAndFooterLayout from "@/app/components/layouts/HeaderAndFooterLayout";
 import NothingLayout from "@/app/components/layouts/NothingLayout";
@@ -32,10 +32,11 @@ import MainDashboards from "@/app/Dashboards/MainDashboards";
 import MembersDashboards from "@/app/Dashboards/MembersDashboards";
 import FilmsDashboards from "@/app/Dashboards/FilmsDashboards";
 import CommentsDashboards from "@/app/Dashboards/CommentsDashboards";
+import HomeContentDashboards from "@/app/Dashboards/HomeContentDashboards";
 import IntroductionPage from "@/app/pages/IntroductionPage";
 import PolicyPage from "@/app/pages/PolicyPage";
 import TermsPage from "@/app/pages/TermsPage";
-import { fetchFilmDetail } from "@/app/services/movieService";
+import {fetchFilmDetail} from "@/app/services/movieService";
 
 interface RouteConfig {
 	path: string;
@@ -45,7 +46,7 @@ interface RouteConfig {
 		episodeSlug?: string;
 		filterValue?: string;
 	}>;
-	layout: React.ComponentType<{ children: React.ReactNode }>;
+	layout: React.ComponentType<{children: React.ReactNode}>;
 	isPrivate?: boolean;
 	isAdmin?: boolean;
 	isDynamic?: boolean;
@@ -200,6 +201,13 @@ const routes: RouteConfig[] = [
 		isDynamic: false,
 	},
 	{
+		path: "/admin/home-content",
+		component: HomeContentDashboards,
+		layout: DashboardLayout,
+		isAdmin: true,
+		isDynamic: false,
+	},
+	{
 		path: "/introduction",
 		component: IntroductionPage,
 		layout: NothingLayout,
@@ -231,12 +239,12 @@ interface PageProps {
 function matchRoute(
 	path: string,
 	pattern: string,
-): { matched: boolean; params: Record<string, string> } {
+): {matched: boolean; params: Record<string, string>} {
 	const pathParts = path.split("/").filter(Boolean);
 	const patternParts = pattern.split("/").filter(Boolean);
 
 	if (pathParts.length !== patternParts.length) {
-		return { matched: false, params: {} };
+		return {matched: false, params: {}};
 	}
 
 	const params: Record<string, string> = {};
@@ -245,16 +253,16 @@ function matchRoute(
 		if (patternParts[i].startsWith(":")) {
 			params[patternParts[i].slice(1)] = pathParts[i];
 		} else if (patternParts[i] !== pathParts[i]) {
-			return { matched: false, params: {} };
+			return {matched: false, params: {}};
 		}
 	}
 
-	return { matched: true, params };
+	return {matched: true, params};
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({params}: PageProps): Promise<Metadata> {
 	try {
-		const { slug } = await params;
+		const {slug} = await params;
 		const path = slug ? "/" + slug.join("/") : "/";
 
 		// Check if this is an info or watch route
@@ -347,8 +355,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 	}
 }
 
-export default async function DynamicPage({ params }: PageProps) {
-	const { slug } = await params;
+export default async function DynamicPage({params}: PageProps) {
+	const {slug} = await params;
 	const path = slug ? "/" + slug.join("/") : "/";
 
 	let matchedRoute: RouteConfig | undefined;
@@ -380,8 +388,8 @@ export default async function DynamicPage({ params }: PageProps) {
 	} = matchedRoute;
 	const Guard =
 		isAdmin ? AdminRoute
-			: isPrivate ? PrivateRoute
-				: PublicRoute;
+		: isPrivate ? PrivateRoute
+		: PublicRoute;
 
 	// Determine filter value for genre/country filter pages
 	let filterValue: string | undefined;
