@@ -182,3 +182,97 @@ export const incrementView = async (slug: string): Promise<void> => {
 		console.error("Error incrementing view:", getErrorMessage(error));
 	}
 };
+
+/**
+ * Fetch movies page data with pagination
+ */
+export const fetchMoviesPageData = async (
+	page: number = 1,
+	limit: number = 24,
+): Promise<{
+	trendingMovies: MovieItem[];
+	newestByYear: MovieItem[];
+	recentlyUploaded: MovieItem[];
+	allMovies: MovieItem[];
+	pagination: {
+		page: number;
+		limit: number;
+		totalCount: number;
+		totalPages: number;
+		hasNext: boolean;
+		hasPrev: boolean;
+	};
+}> => {
+	try {
+		const response = await api.get("/films/movies", {
+			params: {page, limit},
+		});
+		return {
+			trendingMovies: response.data.trendingMovies || [],
+			newestByYear: response.data.newestByYear || [],
+			recentlyUploaded: response.data.recentlyUploaded || [],
+			allMovies: response.data.allMovies || [],
+			pagination: response.data.pagination || {
+				page,
+				limit,
+				totalCount: 0,
+				totalPages: 1,
+				hasNext: false,
+				hasPrev: false,
+			},
+		};
+	} catch (error: unknown) {
+		console.error(
+			"Error fetching movies page data:",
+			getErrorMessage(error),
+		);
+		throw error;
+	}
+};
+
+/**
+ * Fetch series page data with pagination
+ */
+export const fetchSeriesPageData = async (
+	page: number = 1,
+	limit: number = 24,
+): Promise<{
+	trendingSeries: MovieItem[];
+	newestByYear: MovieItem[];
+	recentlyUploaded: MovieItem[];
+	allSeries: MovieItem[];
+	pagination: {
+		page: number;
+		limit: number;
+		totalCount: number;
+		totalPages: number;
+		hasNext: boolean;
+		hasPrev: boolean;
+	};
+}> => {
+	try {
+		const response = await api.get("/films/series", {
+			params: {page, limit},
+		});
+		return {
+			trendingSeries: response.data.trendingSeries || [],
+			newestByYear: response.data.newestByYear || [],
+			recentlyUploaded: response.data.recentlyUploaded || [],
+			allSeries: response.data.allSeries || [],
+			pagination: response.data.pagination || {
+				page,
+				limit,
+				totalCount: 0,
+				totalPages: 1,
+				hasNext: false,
+				hasPrev: false,
+			},
+		};
+	} catch (error: unknown) {
+		console.error(
+			"Error fetching series page data:",
+			getErrorMessage(error),
+		);
+		throw error;
+	}
+};

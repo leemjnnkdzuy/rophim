@@ -135,12 +135,29 @@ export async function PUT(request: NextRequest) {
 			{},
 			{$set: updateData},
 			{upsert: true, new: true, runValidators: true},
-		).lean();
+		);
+
+		// Auto-fix href for each category card to use real MongoDB _id
+		if (homeContent && homeContent.categoryCards) {
+			let needsUpdate = false;
+			for (const card of homeContent.categoryCards) {
+				const correctHref = `/danh-muc/${card._id}`;
+				if (card.href !== correctHref) {
+					card.href = correctHref;
+					needsUpdate = true;
+				}
+			}
+			if (needsUpdate) {
+				await homeContent.save();
+			}
+		}
+
+		const result = homeContent ? homeContent.toObject() : null;
 
 		return NextResponse.json({
 			success: true,
 			message: "Cập nhật thành công",
-			homeContent,
+			homeContent: result,
 		});
 	} catch (error) {
 		console.error("Error updating home content:", error);

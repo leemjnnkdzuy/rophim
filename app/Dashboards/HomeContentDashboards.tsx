@@ -32,53 +32,17 @@ import {Input} from "@/app/components/ui/input";
 import {Button} from "@/app/components/ui/button";
 import {Badge} from "@/app/components/ui/badge";
 import {useGlobalNotificationPopup} from "@/app/hooks/useGlobalNotificationPopup";
-import api from "@/app/utils/axios";
-
-interface FilmItem {
-	_id: string;
-	name: string;
-	slug: string;
-	poster_url: string;
-	thumb_url: string;
-	modified?: Date;
-}
-
-interface CategoryCard {
-	_id?: string;
-	title: string;
-	bgImage: string;
-	href: string;
-	color: string;
-	order: number;
-}
-
-interface HomeContentPayload {
-	featuredFilmSlugs: string[];
-	categoryCards: Array<{
-		title: string;
-		bgImage: string;
-		href: string;
-		color: string;
-		order: number;
-	}>;
-}
-
-const buildHomeContentPayload = (
-	films: FilmItem[],
-	cards: CategoryCard[],
-): HomeContentPayload => ({
-	featuredFilmSlugs: films.map((f) => f.slug),
-	categoryCards: cards.map((card, index) => ({
-		title: card.title,
-		bgImage: card.bgImage,
-		href: card.href,
-		color: card.color,
-		order: index,
-	})),
-});
-
-const serializeHomeContentPayload = (payload: HomeContentPayload) =>
-	JSON.stringify(payload);
+import {
+	fetchHomeContent,
+	saveHomeContent,
+	searchAdminFilms,
+	searchFilmsBySlugs,
+	imageToBase64,
+	buildHomeContentPayload,
+	serializeHomeContentPayload,
+	type FilmItem,
+	type CategoryCard,
+} from "@/app/services/HomeContentService";
 
 export default function HomeContentDashboards() {
 	const [loading, setLoading] = useState(true);
@@ -98,18 +62,26 @@ export default function HomeContentDashboards() {
 	const [categoryCards, setCategoryCards] = useState<CategoryCard[]>([]);
 	const [editingCard, setEditingCard] = useState<CategoryCard | null>(null);
 	const [showCardModal, setShowCardModal] = useState(false);
+	const [editingCardFilms, setEditingCardFilms] = useState(false);
+	const [selectedCardForFilms, setSelectedCardForFilms] =
+		useState<CategoryCard | null>(null);
+	const [categoryFilmSearch, setCategoryFilmSearch] = useState("");
+	const [categoryFilmResults, setCategoryFilmResults] = useState<FilmItem[]>(
+		[],
+	);
+	const [searchingCategoryFilms, setSearchingCategoryFilms] = useState(false);
+	const [shouldAutoSaveCategory, setShouldAutoSaveCategory] = useState(false);
 
 	// Fetch home content configuration
-	const fetchHomeContent = useCallback(async () => {
-		setLoading(true);
-		try {
-			const res = await api.get("/admin/home-content");
-			if (res.data.success) {
-				const {homeContent} = res.data;
-				const fetchedFeaturedFilms = homeContent.featuredFilms || [];
-				const fetchedCategoryCards = [
-					...(homeContent.categoryCards || []),
-				].sort((a: CategoryCard, b: CategoryCard) => a.order - b.order);
+	const fetchHomeContentData = useCallback(
+		async (showLoading = true) => {
+			if (showLoading) setLoading(true);
+			try {
+				const data = await fetchHomeContent();
+				const {
+					featuredFilms: fetchedFeaturedFilms,
+					categoryCards: fetchedCategoryCards,
+				} = data.homeContent;
 
 				setFeaturedFilms(fetchedFeaturedFilms);
 				setCategoryCards(fetchedCategoryCards);
@@ -121,20 +93,21 @@ export default function HomeContentDashboards() {
 						),
 					),
 				);
+			} catch (error) {
+				console.error("Failed to fetch home content:", error);
+				showNotification(
+					"Không thể tải cấu hình trang chủ. Vui lòng thử lại.",
+					"error",
+				);
+			} finally {
+				setLoading(false);
 			}
-		} catch (error) {
-			console.error("Failed to fetch home content:", error);
-			showNotification(
-				"Không thể tải cấu hình trang chủ. Vui lòng thử lại.",
-				"error",
-			);
-		} finally {
-			setLoading(false);
-		}
-	}, [showNotification]);
+		},
+		[showNotification],
+	);
 
 	// Search films
-	const searchFilms = useCallback(
+	const searchFeaturedFilms = useCallback(
 		async (query: string) => {
 			if (!query.trim()) {
 				setSearchResults([]);
@@ -143,10 +116,8 @@ export default function HomeContentDashboards() {
 
 			setSearching(true);
 			try {
-				const res = await api.get("/admin/films", {
-					params: {search: query, limit: 10},
-				});
-				setSearchResults(res.data.films || []);
+				const films = await searchAdminFilms(query, 10);
+				setSearchResults(films);
 			} catch (error) {
 				console.error("Failed to search films:", error);
 				showNotification("Không thể tìm kiếm phim.", "error");
@@ -200,19 +171,29 @@ export default function HomeContentDashboards() {
 
 	// Add or update category card
 	const saveCategoryCard = (card: CategoryCard) => {
-		if (card._id) {
-			// Update existing
+		if (card._id && !card._id.startsWith("temp-")) {
+			// Update existing with real ID
+			const updatedCard = {
+				...card,
+				href: `/danh-muc/${card._id}`,
+			};
 			setCategoryCards(
-				categoryCards.map((c) => (c._id === card._id ? card : c)),
+				categoryCards.map((c) =>
+					c._id === card._id ? updatedCard : c,
+				),
 			);
 		} else {
-			// Add new
+			// Add new - will get real ID after save
+			const tempId = `temp-${Date.now()}`;
 			const newCard = {
 				...card,
-				_id: `temp-${Date.now()}`,
+				_id: tempId,
+				href: `/danh-muc/${tempId}`, // Temporary, will be updated after backend saves
 				order: categoryCards.length,
+				filmSlugs: card.filmSlugs || [],
 			};
 			setCategoryCards([...categoryCards, newCard]);
+			setShouldAutoSaveCategory(true);
 		}
 		setShowCardModal(false);
 		setEditingCard(null);
@@ -221,6 +202,65 @@ export default function HomeContentDashboards() {
 	// Delete category card
 	const deleteCategoryCard = (id: string) => {
 		setCategoryCards(categoryCards.filter((c) => c._id !== id));
+	};
+
+	// Search films for category
+	const searchCategoryFilmsData = useCallback(
+		async (query: string) => {
+			if (!query.trim()) {
+				setCategoryFilmResults([]);
+				return;
+			}
+
+			setSearchingCategoryFilms(true);
+			try {
+				const films = await searchAdminFilms(query, 10);
+				setCategoryFilmResults(films);
+			} catch (error) {
+				console.error("Failed to search films:", error);
+				showNotification("Không thể tìm kiếm phim.", "error");
+			} finally {
+				setSearchingCategoryFilms(false);
+			}
+		},
+		[showNotification],
+	);
+
+	// Add film to category
+	const addFilmToCategory = (cardId: string, film: FilmItem) => {
+		setCategoryCards((prev) =>
+			prev.map((card) => {
+				if (card._id === cardId) {
+					const filmSlugs = card.filmSlugs || [];
+					if (filmSlugs.includes(film.slug)) {
+						showNotification("Phim đã có trong danh mục", "error");
+						return card;
+					}
+					return {
+						...card,
+						filmSlugs: [...filmSlugs, film.slug],
+					};
+				}
+				return card;
+			}),
+		);
+	};
+
+	// Remove film from category
+	const removeFilmFromCategory = (cardId: string, slug: string) => {
+		setCategoryCards((prev) =>
+			prev.map((card) => {
+				if (card._id === cardId) {
+					return {
+						...card,
+						filmSlugs: (card.filmSlugs || []).filter(
+							(s) => s !== slug,
+						),
+					};
+				}
+				return card;
+			}),
+		);
 	};
 
 	// Move category card
@@ -240,13 +280,8 @@ export default function HomeContentDashboards() {
 	};
 
 	// Convert image to base64
-	const imageToBase64 = (file: File): Promise<string> => {
-		return new Promise((resolve, reject) => {
-			const reader = new FileReader();
-			reader.readAsDataURL(file);
-			reader.onload = () => resolve(reader.result as string);
-			reader.onerror = (error) => reject(error);
-		});
+	const handleImageToBase64 = async (file: File): Promise<string> => {
+		return await imageToBase64(file);
 	};
 
 	const currentPayload = useMemo(
@@ -267,11 +302,11 @@ export default function HomeContentDashboards() {
 
 		setSaving(true);
 		try {
-			const res = await api.put("/admin/home-content", currentPayload);
-			if (res.data.success) {
-				setInitialPayloadSnapshot(currentPayloadSnapshot);
-				showNotification("Lưu thành công!", "success");
-			}
+			await saveHomeContent(currentPayload);
+			setInitialPayloadSnapshot(currentPayloadSnapshot);
+			showNotification("Lưu thành công!", "success");
+			// Fetch lại để cập nhật _id thật từ MongoDB
+			await fetchHomeContentData(false);
 		} catch (error) {
 			console.error("Failed to save home content:", error);
 			showNotification("Lưu thất bại. Vui lòng thử lại.", "error");
@@ -281,15 +316,30 @@ export default function HomeContentDashboards() {
 	};
 
 	useEffect(() => {
-		fetchHomeContent();
-	}, [fetchHomeContent]);
+		fetchHomeContentData();
+	}, [fetchHomeContentData]);
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
-			searchFilms(searchQuery);
+			searchFeaturedFilms(searchQuery);
 		}, 300);
 		return () => clearTimeout(timer);
-	}, [searchQuery, searchFilms]);
+	}, [searchQuery, searchFeaturedFilms]);
+
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			searchCategoryFilmsData(categoryFilmSearch);
+		}, 300);
+		return () => clearTimeout(timer);
+	}, [categoryFilmSearch, searchCategoryFilmsData]);
+
+	useEffect(() => {
+		if (shouldAutoSaveCategory && !showCardModal && hasChanges) {
+			setShouldAutoSaveCategory(false);
+			saveChanges();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [shouldAutoSaveCategory, showCardModal]);
 
 	if (loading) {
 		return (
@@ -448,6 +498,7 @@ export default function HomeContentDashboards() {
 								href: "",
 								color: "#E8D5FF",
 								order: categoryCards.length,
+								filmSlugs: [],
 							});
 							setShowCardModal(true);
 						}}
@@ -538,6 +589,15 @@ export default function HomeContentDashboards() {
 											Sửa
 										</button>
 										<button
+											onClick={() => {
+												setSelectedCardForFilms(card);
+												setEditingCardFilms(true);
+											}}
+											className='px-2 py-1 bg-blue-500/80 hover:bg-blue-500 text-white rounded text-xs'
+										>
+											Phim ({card.filmSlugs?.length || 0})
+										</button>
+										<button
 											onClick={() =>
 												deleteCategoryCard(
 													card._id || "",
@@ -569,8 +629,32 @@ export default function HomeContentDashboards() {
 						setShowCardModal(false);
 						setEditingCard(null);
 					}}
-					imageToBase64={imageToBase64}
+					imageToBase64={handleImageToBase64}
 					showNotification={showNotification}
+				/>
+			)}
+
+			{/* Category Films Modal */}
+			{editingCardFilms && selectedCardForFilms && (
+				<CategoryFilmsModal
+					card={selectedCardForFilms}
+					categoryCards={categoryCards}
+					searchQuery={categoryFilmSearch}
+					setSearchQuery={setCategoryFilmSearch}
+					searchResults={categoryFilmResults}
+					searching={searchingCategoryFilms}
+					onAddFilm={(film) =>
+						addFilmToCategory(selectedCardForFilms._id!, film)
+					}
+					onRemoveFilm={(slug) =>
+						removeFilmFromCategory(selectedCardForFilms._id!, slug)
+					}
+					onClose={() => {
+						setEditingCardFilms(false);
+						setSelectedCardForFilms(null);
+						setCategoryFilmSearch("");
+						setCategoryFilmResults([]);
+					}}
 				/>
 			)}
 		</div>
@@ -705,11 +789,15 @@ function CategoryCardModal({
 			showNotification("Vui lòng nhập tiêu đề", "error");
 			return;
 		}
-		if (!formData.href.trim()) {
-			showNotification("Vui lòng nhập đường dẫn", "error");
-			return;
-		}
-		onSave(formData);
+		// Auto-generate href if editing existing or keep empty for new
+		const dataToSave = {
+			...formData,
+			href:
+				formData._id && !formData._id.startsWith("temp-") ?
+					`/danh-muc/${formData._id}`
+				:	formData.href || "",
+		};
+		onSave(dataToSave);
 	};
 
 	return (
@@ -745,25 +833,6 @@ function CategoryCardModal({
 									})
 								}
 								placeholder='VD: Grocery, Educational...'
-								className='bg-white/5 border-white/10 text-white'
-							/>
-						</div>
-
-						{/* Link */}
-						<div>
-							<label className='block text-sm font-medium text-gray-300 mb-2'>
-								Đường dẫn{" "}
-								<span className='text-red-400'>*</span>
-							</label>
-							<Input
-								value={formData.href}
-								onChange={(e) =>
-									setFormData({
-										...formData,
-										href: e.target.value,
-									})
-								}
-								placeholder='/the-loai/hanh-dong'
 								className='bg-white/5 border-white/10 text-white'
 							/>
 						</div>
@@ -875,6 +944,219 @@ function CategoryCardModal({
 							</Button>
 						</div>
 					</form>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+// Category Films Modal Component
+interface CategoryFilmsModalProps {
+	card: CategoryCard;
+	categoryCards: CategoryCard[];
+	searchQuery: string;
+	setSearchQuery: (query: string) => void;
+	searchResults: FilmItem[];
+	searching: boolean;
+	onAddFilm: (film: FilmItem) => void;
+	onRemoveFilm: (slug: string) => void;
+	onClose: () => void;
+}
+
+function CategoryFilmsModal({
+	card,
+	categoryCards,
+	searchQuery,
+	setSearchQuery,
+	searchResults,
+	searching,
+	onAddFilm,
+	onRemoveFilm,
+	onClose,
+}: CategoryFilmsModalProps) {
+	const [films, setFilms] = React.useState<FilmItem[]>([]);
+	const [loading, setLoading] = React.useState(true);
+
+	// Find the actual card from categoryCards to get latest filmSlugs
+	const currentCard = categoryCards.find((c) => c._id === card._id) || card;
+	const filmSlugsKey = (currentCard.filmSlugs || []).join(",");
+
+	// Fetch film details for the category
+	React.useEffect(() => {
+		const fetchFilms = async () => {
+			const slugs = filmSlugsKey.split(",").filter(Boolean);
+			if (slugs.length === 0) {
+				setFilms([]);
+				setLoading(false);
+				return;
+			}
+
+			setLoading(true);
+			try {
+				const fetchedFilms = await searchFilmsBySlugs(slugs, 100);
+				// Sort by order in filmSlugs
+				const sortedFilms = slugs
+					.map((slug) => fetchedFilms.find((f) => f.slug === slug))
+					.filter((f): f is FilmItem => f !== undefined);
+				setFilms(sortedFilms);
+			} catch (error) {
+				console.error("Failed to fetch films:", error);
+				setFilms([]);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchFilms();
+	}, [filmSlugsKey]);
+
+	return (
+		<div className='fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
+			<div className='bg-[#0f1014] border border-white/10 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto'>
+				<div className='p-6'>
+					<div className='flex items-center justify-between mb-6'>
+						<div>
+							<h3 className='text-xl font-bold text-white'>
+								Quản lý phim - {card.title}
+							</h3>
+							<p className='text-sm text-gray-400 mt-1'>
+								Đường dẫn:{" "}
+								{card.href || `/danh-muc/${card._id}`}
+							</p>
+						</div>
+						<button
+							onClick={onClose}
+							className='text-gray-400 hover:text-white'
+						>
+							<X className='h-6 w-6' />
+						</button>
+					</div>
+
+					{/* Search Box */}
+					<div className='mb-4'>
+						<label className='block text-sm font-medium text-gray-300 mb-2'>
+							Tìm kiếm phim để thêm
+						</label>
+						<div className='relative'>
+							<Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+							<Input
+								placeholder='Tìm kiếm phim...'
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+								className='pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500'
+							/>
+							{searching && (
+								<div className='absolute right-3 top-1/2 -translate-y-1/2'>
+									<div className='h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin' />
+								</div>
+							)}
+						</div>
+					</div>
+
+					{/* Search Results */}
+					{searchResults.length > 0 && (
+						<div className='mb-4 max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-black/30'>
+							{searchResults
+								.filter(
+									(film) =>
+										!currentCard.filmSlugs?.includes(
+											film.slug,
+										),
+								)
+								.map((film) => (
+									<div
+										key={film.slug}
+										className='flex items-center gap-3 p-3 hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5 last:border-0'
+										onClick={() => onAddFilm(film)}
+									>
+										<Image
+											src={film.poster_url}
+											alt={film.name}
+											width={40}
+											height={60}
+											className='rounded object-cover'
+											unoptimized
+										/>
+										<div className='flex-1 min-w-0'>
+											<p className='text-sm font-medium text-white truncate'>
+												{film.name}
+											</p>
+											<p className='text-xs text-gray-400'>
+												{film.slug}
+											</p>
+										</div>
+										<Plus className='h-4 w-4 text-primary' />
+									</div>
+								))}
+						</div>
+					)}
+
+					{/* Selected Films */}
+					<div className='mt-6'>
+						<div className='flex items-center justify-between mb-3'>
+							<label className='block text-sm font-medium text-gray-300'>
+								Phim trong danh mục (
+								{currentCard.filmSlugs?.length || 0})
+							</label>
+						</div>
+
+						{loading ?
+							<div className='text-center py-10'>
+								<div className='h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto' />
+								<p className='text-sm text-gray-400 mt-2'>
+									Đang tải...
+								</p>
+							</div>
+						: films.length === 0 ?
+							<div className='text-center py-10 text-gray-500 text-sm rounded-lg border border-white/5 bg-white/5'>
+								Chưa có phim nào. Tìm kiếm và thêm phim vào danh
+								mục.
+							</div>
+						:	<div className='space-y-2 max-h-96 overflow-y-auto'>
+								{films.map((film) => (
+									<div
+										key={film.slug}
+										className='flex items-center gap-3 p-3 rounded-lg border border-white/10 bg-white/5'
+									>
+										<Image
+											src={film.poster_url}
+											alt={film.name}
+											width={50}
+											height={75}
+											className='rounded object-cover'
+											unoptimized
+										/>
+										<div className='flex-1 min-w-0'>
+											<p className='text-sm font-medium text-white truncate'>
+												{film.name}
+											</p>
+											<p className='text-xs text-gray-400'>
+												{film.slug}
+											</p>
+										</div>
+										<button
+											onClick={() =>
+												onRemoveFilm(film.slug)
+											}
+											className='text-red-400 hover:text-red-300'
+										>
+											<Trash2 className='h-4 w-4' />
+										</button>
+									</div>
+								))}
+							</div>
+						}
+					</div>
+
+					{/* Close Button */}
+					<div className='mt-6'>
+						<Button
+							onClick={onClose}
+							className='w-full bg-primary hover:bg-primary/90 text-black font-semibold'
+						>
+							Đóng
+						</Button>
+					</div>
 				</div>
 			</div>
 		</div>

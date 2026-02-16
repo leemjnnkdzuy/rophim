@@ -11,6 +11,7 @@ import {
 	Star,
 	Clock,
 	ChevronRight,
+	ArrowRight,
 	Eye,
 	Flame,
 	ChevronLeft,
@@ -465,25 +466,27 @@ export default function HomePage() {
 			{categoryCards.length > 0 && (
 				<section className='w-full px-4 lg:px-32 py-10'>
 					<SectionTitle title='Danh Mục Nổi Bật' />
-					<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5'>
-						{categoryCards.map((card) => (
+
+					{/* Mobile: single stacked column */}
+					<div className='flex flex-col lg:hidden'>
+						{categoryCards.map((card, i) => (
 							<Link
 								key={card._id}
 								href={card.href}
-								className='group relative overflow-hidden rounded-2xl h-[140px] sm:h-[130px] transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-black/30'
+								className={`group relative block isolate overflow-hidden rounded-3xl h-[160px] border border-white/15 bg-black/20 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.35)] hover:!z-50 ${i > 0 ? "-mt-8" : ""}`}
+								style={{zIndex: i + 1}}
 							>
-								{/* Background */}
 								{card.bgImage ?
 									<div className='absolute inset-0'>
 										<Image
 											src={card.bgImage}
 											alt={card.title}
 											fill
-											sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
-											className='object-cover transition-transform duration-500 group-hover:scale-110'
+											sizes='100vw'
+											className='object-cover transition-transform duration-700 group-hover:scale-110'
 											unoptimized
 										/>
-										<div className='absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent' />
+										<div className='absolute inset-0 bg-gradient-to-r from-black/45 via-black/55 to-black/90' />
 									</div>
 								:	<div
 										className='absolute inset-0'
@@ -493,27 +496,100 @@ export default function HomePage() {
 										}}
 									>
 										<div className='absolute inset-0 bg-gradient-to-br from-white/20 to-transparent' />
+										<div className='absolute inset-0 bg-gradient-to-r from-transparent via-black/10 to-black/45' />
 									</div>
 								}
-
-								{/* Content */}
-								<div className='relative h-full flex flex-col justify-center px-6'>
-									<h3 className='text-xl font-bold text-white drop-shadow-lg leading-tight'>
-										{card.title}
-									</h3>
-									<div className='mt-2 flex items-center gap-2'>
-										<span className='text-sm text-white/70 group-hover:text-white transition-colors'>
-											Khám phá ngay
-										</span>
-										<ChevronRight className='h-4 w-4 text-white/70 group-hover:text-white group-hover:translate-x-1 transition-all' />
+								<div className='relative h-full flex items-start justify-between px-6 py-5'>
+									<div>
+										<h3 className='text-xl font-bold text-white drop-shadow-lg leading-tight'>
+											{card.title}
+										</h3>
 									</div>
+									<span className='shrink-0 self-start pt-1'>
+										<ArrowRight className='h-7 w-7 text-white -rotate-45 transition-transform duration-300 ease-out group-hover:rotate-0' />
+									</span>
 								</div>
-
-								{/* Hover overlay */}
-								<div className='absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
+								<div className='absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500' />
 							</Link>
 						))}
 					</div>
+
+					{/* Desktop: auto-scale columns based on card count */}
+					{(() => {
+						const isCompact = categoryCards.length <= 6;
+						const numCols = isCompact ? 2 : 3;
+						const cardHeight =
+							isCompact ? "h-[200px]" : "h-[160px]";
+						const titleSize = isCompact ? "text-2xl" : "text-xl";
+						return (
+							<div className='hidden lg:flex lg:gap-5'>
+								{Array.from({length: numCols}, (_, colIdx) => {
+									const colCards = categoryCards.filter(
+										(_, i) => i % numCols === colIdx,
+									);
+									return (
+										<div
+											key={colIdx}
+											className='flex-1 flex flex-col'
+										>
+											{colCards.map((card, i) => (
+												<Link
+													key={card._id}
+													href={card.href}
+													className={`group relative block isolate overflow-hidden rounded-3xl ${cardHeight} border border-white/15 bg-black/20 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.35)] hover:!z-50 ${i > 0 ? "-mt-8" : ""}`}
+													style={{zIndex: i + 1}}
+												>
+													{card.bgImage ?
+														<div className='absolute inset-0'>
+															<Image
+																src={
+																	card.bgImage
+																}
+																alt={card.title}
+																fill
+																sizes={
+																	isCompact ?
+																		"50vw"
+																	:	"33vw"
+																}
+																className='object-cover transition-transform duration-700 group-hover:scale-110'
+																unoptimized
+															/>
+															<div className='absolute inset-0 bg-gradient-to-r from-black/45 via-black/55 to-black/90' />
+														</div>
+													:	<div
+															className='absolute inset-0'
+															style={{
+																backgroundColor:
+																	card.color ||
+																	"#E8D5FF",
+															}}
+														>
+															<div className='absolute inset-0 bg-gradient-to-br from-white/20 to-transparent' />
+															<div className='absolute inset-0 bg-gradient-to-r from-transparent via-black/10 to-black/45' />
+														</div>
+													}
+													<div className='relative h-full flex items-start justify-between px-6 py-5'>
+														<div>
+															<h3
+																className={`${titleSize} font-bold text-white drop-shadow-lg leading-tight`}
+															>
+																{card.title}
+															</h3>
+														</div>
+														<span className='shrink-0 self-start pt-1'>
+															<ArrowRight className='h-7 w-7 text-white -rotate-45 transition-transform duration-300 ease-out group-hover:rotate-0' />
+														</span>
+													</div>
+													<div className='absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500' />
+												</Link>
+											))}
+										</div>
+									);
+								})}
+							</div>
+						);
+					})()}
 				</section>
 			)}
 

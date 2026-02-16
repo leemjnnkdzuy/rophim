@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useCallback, useState, useEffect, useMemo } from "react";
+import React, {useCallback, useState, useEffect, useMemo} from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { Button } from "@/app/components/ui/button";
-import { Badge } from "@/app/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
+import {useRouter} from "next/navigation";
+import {Button} from "@/app/components/ui/button";
+import {Badge} from "@/app/components/ui/badge";
+import {Tabs, TabsList, TabsTrigger} from "@/app/components/ui/tabs";
 import {
 	Play,
 	Star,
@@ -30,15 +30,20 @@ import {
 	EpisodeServer,
 	incrementView,
 } from "@/app/services/movieService";
-import type { CategoryGroup } from "@/app/services/movieService";
-import api from "@/app/utils/axios";
-import { useAuth } from "@/app/hooks/useAuth";
-import { useGlobalNotificationPopup } from "@/app/hooks/useGlobalNotificationPopup";
-import { usePageMetadata } from "@/app/hooks/usePageMetadata";
+import type {CategoryGroup} from "@/app/services/movieService";
+import {
+	checkIfFilmSaved,
+	toggleSaveFilm,
+	getFilmWatchHistory,
+	getUserFilmRating,
+} from "@/app/services/UserService";
+import {useAuth} from "@/app/hooks/useAuth";
+import {useGlobalNotificationPopup} from "@/app/hooks/useGlobalNotificationPopup";
+import {usePageMetadata} from "@/app/hooks/usePageMetadata";
 import RatingPopup from "@/app/components/common/RatingPopup";
 
 function getCategories(category: Record<string, CategoryGroup>) {
-	const result: Record<string, { id: string; name: string }[]> = {};
+	const result: Record<string, {id: string; name: string}[]> = {};
 	if (!category) return result;
 	Object.values(category).forEach((cat) => {
 		const groupName = cat?.group?.name;
@@ -50,21 +55,21 @@ function getCategories(category: Record<string, CategoryGroup>) {
 }
 
 function formatEpisodeStatus(currentEp: string, totalEp: number) {
-	if (!currentEp) return { text: `${totalEp} Tập`, isComplete: false };
+	if (!currentEp) return {text: `${totalEp} Tập`, isComplete: false};
 
 	const lower = currentEp.toLowerCase();
 	if (lower.includes("full") || lower.includes("hoàn tất")) {
-		return { text: `${totalEp} Tập`, isComplete: true };
+		return {text: `${totalEp} Tập`, isComplete: true};
 	}
 
 	const num = parseInt(currentEp.replace(/\D/g, ""));
 	if (!isNaN(num) && totalEp && totalEp > 0) {
 		if (num >= totalEp)
-			return { text: `Hoàn Thành ${totalEp} Tập`, isComplete: true };
-		return { text: `Tập ${num}/${totalEp}`, isComplete: false };
+			return {text: `Hoàn Thành ${totalEp} Tập`, isComplete: true};
+		return {text: `Tập ${num}/${totalEp}`, isComplete: false};
 	}
 
-	return { text: currentEp, isComplete: false };
+	return {text: currentEp, isComplete: false};
 }
 
 function InfoPageSkeleton() {
@@ -98,7 +103,7 @@ function InfoPageSkeleton() {
 					))}
 				</div>
 				<div className='grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2'>
-					{Array.from({ length: 20 }).map((_, i) => (
+					{Array.from({length: 20}).map((_, i) => (
 						<div
 							key={i}
 							className='h-11 bg-neutral-800 rounded-lg'
@@ -138,10 +143,10 @@ function InfoPageError({
 	);
 }
 
-export default function InfoPage({ identifier }: { identifier?: string }) {
+export default function InfoPage({identifier}: {identifier?: string}) {
 	const router = useRouter();
-	const { isAuthenticated } = useAuth();
-	const { showNotification } = useGlobalNotificationPopup();
+	const {isAuthenticated} = useAuth();
+	const {showNotification} = useGlobalNotificationPopup();
 	const [film, setFilm] = useState<FilmDetail | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -174,7 +179,7 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 			setError(
 				err instanceof Error ?
 					err.message
-					: "Có lỗi xảy ra khi tải thông tin phim.",
+				:	"Có lỗi xảy ra khi tải thông tin phim.",
 			);
 		} finally {
 			setLoading(false);
@@ -196,12 +201,8 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 				return;
 			}
 
-			try {
-				const response = await api.get(`/user/saved?slug=${slug}`);
-				setIsSaved(!!response.data?.isSaved);
-			} catch {
-				setIsSaved(false);
-			}
+			const isSaved = await checkIfFilmSaved(slug);
+			setIsSaved(isSaved);
 		};
 
 		loadSavedStatus();
@@ -214,20 +215,8 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 				setLastWatchedEp(null);
 				return;
 			}
-			try {
-				const response = await api.get(`/user/history?slug=${slug}`);
-				if (response.data?.found && response.data.lastWatched) {
-					setLastWatchedEp({
-						episodeSlug: response.data.lastWatched.episodeSlug,
-						episodeName: response.data.lastWatched.episodeName,
-						serverIdx: response.data.lastWatched.serverIdx,
-					});
-				} else {
-					setLastWatchedEp(null);
-				}
-			} catch {
-				setLastWatchedEp(null);
-			}
+			const lastWatchedData = await getFilmWatchHistory(slug);
+			setLastWatchedEp(lastWatchedData);
 		};
 
 		loadWatchHistory();
@@ -245,11 +234,10 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 
 		try {
 			setIsSaving(true);
-			const response = await api.post("/user/saved", {
+			const nextSaved = await toggleSaveFilm(
 				slug,
-				action: isSaved ? "remove" : "add",
-			});
-			const nextSaved = !!response.data?.isSaved;
+				isSaved ? "remove" : "add",
+			);
 			setIsSaved(nextSaved);
 			showNotification(
 				nextSaved ? "Đã lưu phim" : "Đã bỏ lưu phim",
@@ -265,9 +253,9 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 	const loadUserRating = useCallback(async () => {
 		if (!slug || !isAuthenticated) return;
 		try {
-			const response = await api.get(`/user/films/${slug}`);
-			if (response.data?.success) {
-				setUserRating(response.data.userRating);
+			const data = await getUserFilmRating(slug);
+			if (data.success) {
+				setUserRating(data.userRating || null);
 			}
 		} catch {
 			// Silently fail
@@ -284,7 +272,7 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 	) => {
 		setUserRating(rating);
 		if (typeof filmAverage === "number" && film) {
-			setFilm({ ...film, rating: filmAverage });
+			setFilm({...film, rating: filmAverage});
 		}
 		setShowRatingPopup(false);
 	};
@@ -304,7 +292,7 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 	);
 
 	const episodeStatus = useMemo(() => {
-		if (!film) return { text: "", isComplete: false };
+		if (!film) return {text: "", isComplete: false};
 		return formatEpisodeStatus(film.current_episode, film.total_episodes);
 	}, [film]);
 
@@ -411,7 +399,7 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 									<Eye className='h-3.5 w-3.5 mr-1' />
 									{film.views ?
 										film.views.toLocaleString()
-										: 0}{" "}
+									:	0}{" "}
 									lượt xem
 								</Badge>
 								{years.length > 0 && (
@@ -452,14 +440,15 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 							{/* Episode Status */}
 							<div className='mb-5 flex items-center gap-2 justify-center lg:justify-start'>
 								<div
-									className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${episodeStatus.isComplete ?
-										"bg-green-500/15 text-green-400 border border-green-500/30"
-										: "bg-primary/15 text-primary border border-primary/30"
-										}`}
+									className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${
+										episodeStatus.isComplete ?
+											"bg-green-500/15 text-green-400 border border-green-500/30"
+										:	"bg-primary/15 text-primary border border-primary/30"
+									}`}
 								>
 									{episodeStatus.isComplete ?
 										<CheckCircle2 className='h-4 w-4' />
-										: <Tv className='h-4 w-4' />}
+									:	<Tv className='h-4 w-4' />}
 									{episodeStatus.text}
 								</div>
 								{film.language && (
@@ -517,7 +506,7 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 									/>
 									{lastWatchedEp ?
 										`Tiếp tục xem tập ${lastWatchedEp.episodeName || lastWatchedEp.episodeSlug}`
-										: "Xem Ngay"}
+									:	"Xem Ngay"}
 								</Button>
 
 								<div className='flex items-center gap-2'>
@@ -529,7 +518,7 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 										>
 											<Bookmark className='h-5 w-5' />
 										</Button>
-										: <Button
+									:	<Button
 											variant='outline'
 											size='icon'
 											onClick={handleToggleSave}
@@ -591,9 +580,7 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 
 			{/* Two-Column Content Section */}
 			<section className='w-full px-4 lg:px-32 py-6'>
-				<div
-					className='grid gap-6 lg:gap-8 grid-cols-1 lg:grid-cols-[30%_1fr]'
-				>
+				<div className='grid gap-6 lg:gap-8 grid-cols-1 lg:grid-cols-[30%_1fr]'>
 					{/* LEFT COLUMN — Overview & Cast (30%) */}
 					<div className='bg-white/[0.03] rounded-2xl p-6 border border-white/5 space-y-8 order-2 lg:order-1 h-fit'>
 						{/* Description */}
@@ -619,7 +606,7 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 										>
 											{isDescExpanded ?
 												"Thu gọn"
-												: "Xem thêm"}
+											:	"Xem thêm"}
 											<ChevronDown
 												className={`h-3.5 w-3.5 transition-transform ${isDescExpanded ? "rotate-180" : ""}`}
 											/>
@@ -706,7 +693,7 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 												</div>
 											))}
 									</div>
-									: <p className='text-gray-500 text-sm py-2 text-center italic'>
+								:	<p className='text-gray-500 text-sm py-2 text-center italic'>
 										Chưa có thông tin diễn viên.
 									</p>
 								}
@@ -728,28 +715,35 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 									</h3>
 
 									{/* Server Selector */}
-									{film.episodes && film.episodes.length > 1 && (
-										<Tabs
-											value={String(activeServerIdx)}
-											onValueChange={(v) =>
-												setActiveServerIdx(Number(v))
-											}
-										>
-											<TabsList className='bg-white/5 border border-white/10 h-9 p-1'>
-												{film.episodes.map(
-													(server, idx) => (
-														<TabsTrigger
-															key={idx}
-															value={String(idx)}
-															className='data-[state=active]:bg-primary data-[state=active]:text-black h-full px-4 rounded-md transition-all font-medium'
-														>
-															{server.server_name}
-														</TabsTrigger>
-													),
-												)}
-											</TabsList>
-										</Tabs>
-									)}
+									{film.episodes &&
+										film.episodes.length > 1 && (
+											<Tabs
+												value={String(activeServerIdx)}
+												onValueChange={(v) =>
+													setActiveServerIdx(
+														Number(v),
+													)
+												}
+											>
+												<TabsList className='bg-white/5 border border-white/10 h-9 p-1'>
+													{film.episodes.map(
+														(server, idx) => (
+															<TabsTrigger
+																key={idx}
+																value={String(
+																	idx,
+																)}
+																className='data-[state=active]:bg-primary data-[state=active]:text-black h-full px-4 rounded-md transition-all font-medium'
+															>
+																{
+																	server.server_name
+																}
+															</TabsTrigger>
+														),
+													)}
+												</TabsList>
+											</Tabs>
+										)}
 								</div>
 
 								{/* Episode Grid */}
@@ -767,10 +761,11 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 															`/xem/${film.slug}/${ep.slug}`,
 														)
 													}
-													className={`relative h-11 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer group ${isLastWatched ?
-														"bg-primary/20 border border-primary/40 text-primary ring-1 ring-primary/30"
-														: "bg-white/5 border border-white/10 text-gray-300 hover:bg-primary/20 hover:border-primary/40 hover:text-primary"
-														}`}
+													className={`relative h-11 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer group ${
+														isLastWatched ?
+															"bg-primary/20 border border-primary/40 text-primary ring-1 ring-primary/30"
+														:	"bg-white/5 border border-white/10 text-gray-300 hover:bg-primary/20 hover:border-primary/40 hover:text-primary"
+													}`}
 												>
 													<span className='relative z-10 flex items-center justify-center gap-1'>
 														{isLastWatched && (
@@ -788,7 +783,7 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 											);
 										})}
 									</div>
-									: <div className='flex flex-col items-center justify-center py-20 gap-3 bg-white/[0.02] rounded-2xl border border-white/5'>
+								:	<div className='flex flex-col items-center justify-center py-20 gap-3 bg-white/[0.02] rounded-2xl border border-white/5'>
 										<Film className='h-12 w-12 text-white/10' />
 										<p className='text-gray-500 text-sm'>
 											Chưa có tập phim nào.
@@ -799,11 +794,10 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 						)}
 
 						{/* Comment Section */}
-						<div className={isSingleFilm ? '' : 'mt-8'}>
+						<div className={isSingleFilm ? "" : "mt-8"}>
 							<CommentSection filmSlug={slug} />
 						</div>
 					</div>
-
 				</div>
 			</section>
 
@@ -822,7 +816,7 @@ export default function InfoPage({ identifier }: { identifier?: string }) {
 }
 
 // --- Sub Components ---
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({label, value}: {label: string; value: string}) {
 	return (
 		<div className='flex items-start justify-between gap-4'>
 			<span className='text-xs text-gray-500 font-medium shrink-0 uppercase tracking-wider'>

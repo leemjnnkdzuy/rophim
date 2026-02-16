@@ -1,21 +1,19 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Bookmark, Film, Loader2 } from "lucide-react";
-import { SectionTitle } from "@/app/components/common/SectionTitle";
-import { MovieCard } from "@/app/components/common/MovieCard";
-import { Button } from "@/app/components/ui/button";
-import api from "@/app/utils/axios";
-import { useAuth } from "@/app/hooks/useAuth";
-import { Movie } from "@/app/types/movie";
-import { mapFilmToMovie, ApiMovieItem } from "@/app/utils/movieMapper";
-
-
+import React, {useEffect, useMemo, useState} from "react";
+import {useRouter} from "next/navigation";
+import {Bookmark, Film, Loader2} from "lucide-react";
+import {SectionTitle} from "@/app/components/common/SectionTitle";
+import {MovieCard} from "@/app/components/common/MovieCard";
+import {Button} from "@/app/components/ui/button";
+import {useAuth} from "@/app/hooks/useAuth";
+import {Movie} from "@/app/types/movie";
+import {mapFilmToMovie, ApiMovieItem} from "@/app/utils/movieMapper";
+import {getUserSavedFilms} from "@/app/services/UserService";
 
 export default function SavedPage() {
 	const router = useRouter();
-	const { isAuthenticated, loading } = useAuth();
+	const {isAuthenticated, loading} = useAuth();
 	const [isFetching, setIsFetching] = useState(true);
 	const [savedFilms, setSavedFilms] = useState<ApiMovieItem[]>([]);
 	const [error, setError] = useState<string | null>(null);
@@ -30,8 +28,8 @@ export default function SavedPage() {
 
 			try {
 				setIsFetching(true);
-				const response = await api.get("/user/saved");
-				setSavedFilms(response.data?.films || []);
+				const films = await getUserSavedFilms();
+				setSavedFilms(films as unknown as ApiMovieItem[]);
 				setError(null);
 			} catch {
 				setError("Không thể tải danh sách phim đã lưu.");
@@ -96,30 +94,34 @@ export default function SavedPage() {
 						Thử lại
 					</Button>
 				</div>
-				: movies.length === 0 ?
-					<div className='flex flex-col items-center justify-center gap-3 py-16 text-center'>
-						<div className='w-16 h-16 rounded-full bg-white/5 flex items-center justify-center'>
-							<Film className='h-8 w-8 text-white/30' />
-						</div>
-						<h3 className='text-lg font-semibold text-white'>
-							Chưa có phim đã lưu
-						</h3>
-						<p className='text-sm text-gray-400'>
-							Lưu phim để xem lại sau.
-						</p>
-						<Button
-							variant='outline'
-							className='border-white/10 text-gray-300 hover:bg-white/10'
-							onClick={() => router.push("/")}
-						>
-							Khám phá phim mới
-						</Button>
+			: movies.length === 0 ?
+				<div className='flex flex-col items-center justify-center gap-3 py-16 text-center'>
+					<div className='w-16 h-16 rounded-full bg-white/5 flex items-center justify-center'>
+						<Film className='h-8 w-8 text-white/30' />
 					</div>
-					: <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5'>
-						{movies.map((movie) => (
-							<MovieCard key={movie.id} movie={movie} preferBackdrop />
-						))}
-					</div>
+					<h3 className='text-lg font-semibold text-white'>
+						Chưa có phim đã lưu
+					</h3>
+					<p className='text-sm text-gray-400'>
+						Lưu phim để xem lại sau.
+					</p>
+					<Button
+						variant='outline'
+						className='border-white/10 text-gray-300 hover:bg-white/10'
+						onClick={() => router.push("/")}
+					>
+						Khám phá phim mới
+					</Button>
+				</div>
+			:	<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 lg:gap-5'>
+					{movies.map((movie) => (
+						<MovieCard
+							key={movie.id}
+							movie={movie}
+							preferBackdrop
+						/>
+					))}
+				</div>
 			}
 		</section>
 	);

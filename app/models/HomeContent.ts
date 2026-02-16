@@ -4,11 +4,13 @@ import mongoose, {Schema, Document, Model} from "mongoose";
  * Interface cho một thẻ danh mục tùy chỉnh trên trang chủ
  */
 export interface ICategoryCard {
+	_id?: string; // MongoDB ObjectId (string format)
 	title: string; // Tiêu đề danh mục (VD: "Grocery", "Educational")
 	bgImage: string; // Ảnh nền dạng base64 (admin upload)
-	href: string; // Link điều hướng khi click
+	href: string; // Link điều hướng khi click (auto-generated: /danh-muc/{_id})
 	color: string; // Màu nền chủ đạo (VD: "#E8D5FF", "#FFEAA7")
 	order: number; // Thứ tự hiển thị
+	filmSlugs: string[]; // Danh sách slug phim trong danh mục
 }
 
 /**
@@ -34,6 +36,7 @@ const CategoryCardSchema: Schema = new Schema(
 		href: {type: String, required: true},
 		color: {type: String, default: "#E8D5FF"},
 		order: {type: Number, default: 0},
+		filmSlugs: {type: [String], default: []}, // Danh sách slug phim
 	},
 	{_id: true},
 );

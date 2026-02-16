@@ -33,10 +33,16 @@ export async function GET() {
 			(a, b) => (a.order || 0) - (b.order || 0),
 		);
 
+		// Auto-fix href to always use real MongoDB _id
+		const fixedCards = sortedCards.map((card) => ({
+			...card,
+			href: `/danh-muc/${card._id}`,
+		}));
+
 		return NextResponse.json(
 			{
 				featuredFilmSlugs: homeContent.featuredFilmSlugs || [],
-				categoryCards: sortedCards,
+				categoryCards: fixedCards,
 			},
 			{
 				headers: {

@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
-import { MovieCard } from "@/app/components/common/MovieCard";
-import { Input } from "@/app/components/ui/input";
-import { Button } from "@/app/components/ui/button";
-import { Badge } from "@/app/components/ui/badge";
+import React, {useState, useEffect, useCallback} from "react";
+import {useSearchParams} from "next/navigation";
+import {MovieCard} from "@/app/components/common/MovieCard";
+import {Input} from "@/app/components/ui/input";
+import {Button} from "@/app/components/ui/button";
+import {Badge} from "@/app/components/ui/badge";
 import {
 	Search,
 	Filter,
@@ -16,15 +16,15 @@ import {
 	Clock,
 	Sparkles,
 } from "lucide-react";
-import api from "@/app/utils/axios";
-import { Movie } from "@/app/types/movie";
-import { mapFilmToMovie, ApiMovieItem } from "@/app/utils/movieMapper";
+import {Movie} from "@/app/types/movie";
+import {mapFilmToMovie, ApiMovieItem} from "@/app/utils/movieMapper";
+import {fetchYears, searchFilms, type MovieItem} from "@/app/services";
 
 // Filter options
 const SORT_OPTIONS = [
-	{ value: "views", label: "Lượt xem", icon: TrendingUp },
-	{ value: "rating", label: "Đánh giá", icon: Sparkles },
-	{ value: "latest", label: "Mới nhất", icon: Clock },
+	{value: "views", label: "Lượt xem", icon: TrendingUp},
+	{value: "rating", label: "Đánh giá", icon: Sparkles},
+	{value: "latest", label: "Mới nhất", icon: Clock},
 ];
 
 export default function SearchPage() {
@@ -48,19 +48,19 @@ export default function SearchPage() {
 
 	// Fetch years on mount
 	useEffect(() => {
-		const fetchYears = async () => {
+		const loadYears = async () => {
 			try {
-				const res = await api.get("/years");
-				if (Array.isArray(res.data)) {
-					setYearOptions(["Tất cả", ...res.data]);
-				}
+				const years = await fetchYears();
+				setYearOptions([
+					"Tất cả",
+					...years.map((y) => (typeof y === "string" ? y : y.name)),
+				]);
 			} catch {
 				console.error("Failed to fetch years");
 			}
 		};
-		fetchYears();
+		loadYears();
 	}, []);
-
 
 	const handleSearch = useCallback(async (query: string) => {
 		if (!query.trim()) {
@@ -75,16 +75,15 @@ export default function SearchPage() {
 		setSearchQuery(query);
 
 		try {
-			// Call API to search films
-			const response = await api.get("/films/search", {
-				params: {
-					q: query,
-					limit: 100,
-				},
+			const {films} = await searchFilms({
+				q: query,
+				limit: 100,
 			});
 
 			const results: Movie[] =
-				response.data.films?.map((film: Record<string, unknown>) => mapFilmToMovie(film as unknown as ApiMovieItem)) || [];
+				films?.map((film: MovieItem) =>
+					mapFilmToMovie(film as unknown as ApiMovieItem),
+				) || [];
 
 			setMovies(results);
 			setFilteredMovies(results);
@@ -160,7 +159,7 @@ export default function SearchPage() {
 		setSelectedGenres((prev) =>
 			prev.includes(genre) ?
 				prev.filter((g) => g !== genre)
-				: [...prev, genre],
+			:	[...prev, genre],
 		);
 	};
 
@@ -219,7 +218,7 @@ export default function SearchPage() {
 								>
 									{isLoading ?
 										<Loader2 className='h-4 w-4 animate-spin' />
-										: "Tìm"}
+									:	"Tìm"}
 								</Button>
 							</div>
 						</div>
@@ -241,14 +240,14 @@ export default function SearchPage() {
 									{(selectedCountry !== "Tất cả" ||
 										selectedYear !== "Tất cả" ||
 										selectedGenres.length > 0) && (
-											<Badge className='ml-2 bg-[#8ae4ff] text-black text-xs px-1.5 py-0 border-0'>
-												{(selectedCountry !== "Tất cả" ? 1
-													: 0) +
-													(selectedYear !== "Tất cả" ? 1
-														: 0) +
-													selectedGenres.length}
-											</Badge>
-										)}
+										<Badge className='ml-2 bg-[#8ae4ff] text-black text-xs px-1.5 py-0 border-0'>
+											{(selectedCountry !== "Tất cả" ? 1
+											:	0) +
+												(selectedYear !== "Tất cả" ? 1
+												:	0) +
+												selectedGenres.length}
+										</Badge>
+									)}
 								</Button>
 
 								{/* Sort Options */}
@@ -264,13 +263,14 @@ export default function SearchPage() {
 													)
 												}
 												variant='outline'
-												className={`border-white/10 rounded-lg transition-all ${(
-													selectedSort ===
-													option.value
-												) ?
-													"bg-[#8ae4ff]/20 border-[#8ae4ff]/50 text-[#8ae4ff]"
-													: "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
-													}`}
+												className={`border-white/10 rounded-lg transition-all ${
+													(
+														selectedSort ===
+														option.value
+													) ?
+														"bg-[#8ae4ff]/20 border-[#8ae4ff]/50 text-[#8ae4ff]"
+													:	"bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+												}`}
 											>
 												<Icon className='h-4 w-4 mr-2' />
 												{option.label}
@@ -309,7 +309,10 @@ export default function SearchPage() {
 											Quốc gia
 										</p>
 										<div className='flex flex-wrap gap-2'>
-											{["Tất cả", ...availableCountries].map((country) => (
+											{[
+												"Tất cả",
+												...availableCountries,
+											].map((country) => (
 												<Badge
 													key={`country-${country}`}
 													onClick={() =>
@@ -317,13 +320,14 @@ export default function SearchPage() {
 															country as string,
 														)
 													}
-													className={`cursor-pointer transition-all ${(
-														selectedCountry ===
-														country
-													) ?
-														"bg-[#8ae4ff] text-black border-[#8ae4ff]"
-														: "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
-														}`}
+													className={`cursor-pointer transition-all ${
+														(
+															selectedCountry ===
+															country
+														) ?
+															"bg-[#8ae4ff] text-black border-[#8ae4ff]"
+														:	"bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+													}`}
 												>
 													{country}
 												</Badge>
@@ -343,10 +347,11 @@ export default function SearchPage() {
 													onClick={() =>
 														setSelectedYear(year)
 													}
-													className={`cursor-pointer transition-all ${selectedYear === year ?
-														"bg-[#8ae4ff] text-black border-[#8ae4ff]"
-														: "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
-														}`}
+													className={`cursor-pointer transition-all ${
+														selectedYear === year ?
+															"bg-[#8ae4ff] text-black border-[#8ae4ff]"
+														:	"bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+													}`}
 												>
 													{year}
 												</Badge>
@@ -366,14 +371,15 @@ export default function SearchPage() {
 													onClick={() =>
 														toggleGenre(genre)
 													}
-													className={`cursor-pointer transition-all ${(
-														selectedGenres.includes(
-															genre,
-														)
-													) ?
-														"bg-[#8ae4ff] text-black border-[#8ae4ff]"
-														: "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
-														}`}
+													className={`cursor-pointer transition-all ${
+														(
+															selectedGenres.includes(
+																genre,
+															)
+														) ?
+															"bg-[#8ae4ff] text-black border-[#8ae4ff]"
+														:	"bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+													}`}
 												>
 													{genre}
 												</Badge>
@@ -386,19 +392,19 @@ export default function SearchPage() {
 								{(selectedCountry !== "Tất cả" ||
 									selectedYear !== "Tất cả" ||
 									selectedGenres.length > 0) && (
-										<Button
-											onClick={() => {
-												setSelectedCountry("Tất cả");
-												setSelectedYear("Tất cả");
-												setSelectedGenres([]);
-											}}
-											variant='ghost'
-											className='mt-3 text-[#8ae4ff] hover:text-[#8ae4ff]/80 hover:bg-[#8ae4ff]/10'
-										>
-											<X className='h-4 w-4 mr-2' />
-											Xóa bộ lọc
-										</Button>
-									)}
+									<Button
+										onClick={() => {
+											setSelectedCountry("Tất cả");
+											setSelectedYear("Tất cả");
+											setSelectedGenres([]);
+										}}
+										variant='ghost'
+										className='mt-3 text-[#8ae4ff] hover:text-[#8ae4ff]/80 hover:bg-[#8ae4ff]/10'
+									>
+										<X className='h-4 w-4 mr-2' />
+										Xóa bộ lọc
+									</Button>
+								)}
 							</div>
 						)}
 					</div>
@@ -411,41 +417,41 @@ export default function SearchPage() {
 							<Loader2 className='h-12 w-12 text-[#8ae4ff] animate-spin mb-4' />
 							<p className='text-gray-400'>Đang tìm kiếm...</p>
 						</div>
-						: filteredMovies.length > 0 ?
-							<div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4'>
-								{filteredMovies.map((movie) => (
-									<MovieCard key={movie.id} movie={movie} />
-								))}
+					: filteredMovies.length > 0 ?
+						<div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4'>
+							{filteredMovies.map((movie) => (
+								<MovieCard key={movie.id} movie={movie} />
+							))}
+						</div>
+					: hasSearched ?
+						<div className='flex flex-col items-center justify-center py-20'>
+							<div className='p-6 bg-white/5 rounded-2xl border border-white/10 mb-4'>
+								<Film className='h-16 w-16 text-gray-600 mx-auto' />
 							</div>
-							: hasSearched ?
-								<div className='flex flex-col items-center justify-center py-20'>
-									<div className='p-6 bg-white/5 rounded-2xl border border-white/10 mb-4'>
-										<Film className='h-16 w-16 text-gray-600 mx-auto' />
-									</div>
-									<h3 className='text-xl font-semibold mb-2'>
-										Không tìm thấy kết quả
-									</h3>
-									<p className='text-gray-400 text-center max-w-md'>
-										Không tìm thấy phim nào phù hợp với từ khóa
-										&ldquo;
-										<span className='text-white font-medium'>
-											{searchQuery}
-										</span>
-										&rdquo;. Vui lòng thử lại với từ khóa khác.
-									</p>
-								</div>
-								: <div className='flex flex-col items-center justify-center py-20'>
-									<div className='p-6 bg-gradient-to-br from-[#8ae4ff]/20 to-[#8ae4ff]/5 rounded-2xl border border-[#8ae4ff]/20 mb-4'>
-										<Search className='h-16 w-16 text-[#8ae4ff] mx-auto' />
-									</div>
-									<h3 className='text-xl font-semibold mb-2'>
-										Bắt đầu tìm kiếm
-									</h3>
-									<p className='text-gray-400 text-center max-w-md'>
-										Nhập tên phim, diễn viên hoặc đạo diễn để tìm
-										kiếm phim yêu thích của bạn
-									</p>
-								</div>
+							<h3 className='text-xl font-semibold mb-2'>
+								Không tìm thấy kết quả
+							</h3>
+							<p className='text-gray-400 text-center max-w-md'>
+								Không tìm thấy phim nào phù hợp với từ khóa
+								&ldquo;
+								<span className='text-white font-medium'>
+									{searchQuery}
+								</span>
+								&rdquo;. Vui lòng thử lại với từ khóa khác.
+							</p>
+						</div>
+					:	<div className='flex flex-col items-center justify-center py-20'>
+							<div className='p-6 bg-gradient-to-br from-[#8ae4ff]/20 to-[#8ae4ff]/5 rounded-2xl border border-[#8ae4ff]/20 mb-4'>
+								<Search className='h-16 w-16 text-[#8ae4ff] mx-auto' />
+							</div>
+							<h3 className='text-xl font-semibold mb-2'>
+								Bắt đầu tìm kiếm
+							</h3>
+							<p className='text-gray-400 text-center max-w-md'>
+								Nhập tên phim, diễn viên hoặc đạo diễn để tìm
+								kiếm phim yêu thích của bạn
+							</p>
+						</div>
 					}
 				</div>
 			</div>

@@ -28,6 +28,7 @@ import MoviePage from "@/app/pages/MoviePage";
 import SeriesPage from "@/app/pages/SeriesPage";
 import CountriesFilterPage from "@/app/pages/CountriesFilterPage";
 import GenresFilterPage from "@/app/pages/GenresFilterPage";
+import CategoryPage from "@/app/pages/CategoryPage";
 import MainDashboards from "@/app/Dashboards/MainDashboards";
 import MembersDashboards from "@/app/Dashboards/MembersDashboards";
 import FilmsDashboards from "@/app/Dashboards/FilmsDashboards";
@@ -45,6 +46,7 @@ interface RouteConfig {
 		identifier?: string;
 		episodeSlug?: string;
 		filterValue?: string;
+		id?: string;
 	}>;
 	layout: React.ComponentType<{children: React.ReactNode}>;
 	isPrivate?: boolean;
@@ -154,6 +156,13 @@ const routes: RouteConfig[] = [
 	{
 		path: "/quoc-gia/:identifier",
 		component: CountriesFilterPage,
+		layout: HeaderAndFooterLayout,
+		isPrivate: false,
+		isDynamic: true,
+	},
+	{
+		path: "/danh-muc/:id",
+		component: CategoryPage,
 		layout: HeaderAndFooterLayout,
 		isPrivate: false,
 		isDynamic: true,
@@ -408,6 +417,7 @@ export default async function DynamicPage({params}: PageProps) {
 					identifier={routeParams.identifier}
 					episodeSlug={routeParams.episodeSlug}
 					filterValue={filterValue}
+					id={routeParams.id}
 				/>
 			</Guard>
 		</Layout>

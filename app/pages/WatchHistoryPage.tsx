@@ -1,22 +1,14 @@
 "use client";
 
-import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import React, {useEffect, useMemo, useState, useCallback} from "react";
+import {useRouter} from "next/navigation";
 import Image from "next/image";
-import {
-	History,
-	Film,
-	Loader2,
-	Play,
-	Clock,
-	AlertCircle,
-} from "lucide-react";
-import { SectionTitle } from "@/app/components/common/SectionTitle";
-import { Button } from "@/app/components/ui/button";
-import { Badge } from "@/app/components/ui/badge";
-import api from "@/app/utils/axios";
-import { useAuth } from "@/app/hooks/useAuth";
-import { useGlobalNotificationPopup } from "@/app/hooks/useGlobalNotificationPopup";
+import {History, Film, Loader2, Play, Clock, AlertCircle} from "lucide-react";
+import {SectionTitle} from "@/app/components/common/SectionTitle";
+import {Button} from "@/app/components/ui/button";
+import {Badge} from "@/app/components/ui/badge";
+import {useAuth} from "@/app/hooks/useAuth";
+import {getUserWatchHistory} from "@/app/services/UserService";
 
 interface WatchHistoryEntry {
 	filmSlug: string;
@@ -36,8 +28,8 @@ interface WatchHistoryEntry {
 		language?: string;
 		rating?: number;
 		views?: number;
-		genres?: { id: string; name: string }[];
-		years?: { id: string; name: string }[];
+		genres?: {id: string; name: string}[];
+		years?: {id: string; name: string}[];
 	};
 }
 
@@ -59,19 +51,19 @@ function formatTimeAgo(dateStr: string): string {
 
 function groupByDate(
 	entries: WatchHistoryEntry[],
-): { label: string; items: WatchHistoryEntry[] }[] {
+): {label: string; items: WatchHistoryEntry[]}[] {
 	const now = new Date();
 	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 	const yesterday = new Date(today.getTime() - 86400000);
 	const thisWeek = new Date(today.getTime() - 7 * 86400000);
 	const thisMonth = new Date(today.getTime() - 30 * 86400000);
 
-	const groups: { label: string; items: WatchHistoryEntry[] }[] = [
-		{ label: "Hôm nay", items: [] },
-		{ label: "Hôm qua", items: [] },
-		{ label: "Tuần này", items: [] },
-		{ label: "Tháng này", items: [] },
-		{ label: "Trước đó", items: [] },
+	const groups: {label: string; items: WatchHistoryEntry[]}[] = [
+		{label: "Hôm nay", items: []},
+		{label: "Hôm qua", items: []},
+		{label: "Tuần này", items: []},
+		{label: "Tháng này", items: []},
+		{label: "Trước đó", items: []},
 	];
 
 	entries.forEach((entry) => {
@@ -94,12 +86,10 @@ function groupByDate(
 
 export default function WatchHistoryPage() {
 	const router = useRouter();
-	const { isAuthenticated, loading } = useAuth();
-	const { showNotification } = useGlobalNotificationPopup();
+	const {isAuthenticated, loading} = useAuth();
 	const [isFetching, setIsFetching] = useState(true);
 	const [history, setHistory] = useState<WatchHistoryEntry[]>([]);
 	const [error, setError] = useState<string | null>(null);
-
 
 	const fetchHistory = useCallback(async () => {
 		if (loading) return;
@@ -110,8 +100,8 @@ export default function WatchHistoryPage() {
 
 		try {
 			setIsFetching(true);
-			const response = await api.get("/user/history");
-			setHistory(response.data?.history || []);
+			const historyData = await getUserWatchHistory();
+			setHistory(historyData as unknown as WatchHistoryEntry[]);
 			setError(null);
 		} catch {
 			setError("Không thể tải lịch sử xem phim.");
@@ -175,57 +165,55 @@ export default function WatchHistoryPage() {
 						Thử lại
 					</Button>
 				</div>
-				: history.length === 0 ?
-					<div className='flex flex-col items-center justify-center gap-3 py-16 text-center'>
-						<div className='w-16 h-16 rounded-full bg-white/5 flex items-center justify-center'>
-							<Film className='h-8 w-8 text-white/30' />
-						</div>
-						<h3 className='text-lg font-semibold text-white'>
-							Chưa có lịch sử xem phim
-						</h3>
-						<p className='text-sm text-gray-400'>
-							Xem phim để tạo lịch sử và dễ dàng tiếp tục từ nơi bạn
-							đã dừng.
-						</p>
-						<Button
-							variant='outline'
-							className='border-white/10 text-gray-300 hover:bg-white/10 cursor-pointer'
-							onClick={() => router.push("/")}
-						>
-							Khám phá phim mới
-						</Button>
+			: history.length === 0 ?
+				<div className='flex flex-col items-center justify-center gap-3 py-16 text-center'>
+					<div className='w-16 h-16 rounded-full bg-white/5 flex items-center justify-center'>
+						<Film className='h-8 w-8 text-white/30' />
 					</div>
-					: <div className='space-y-8'>
-						{groupedHistory.map((group) => (
-							<div key={group.label} className='space-y-3'>
-								<h3 className='text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2'>
-									<Clock className='h-4 w-4' />
-									{group.label}
-								</h3>
-								<div className='space-y-2'>
-									{group.items.map((entry) => (
-										<WatchHistoryCard
-											key={entry.filmSlug}
-											entry={entry}
-											onContinue={() =>
-												router.push(
-													`/xem/${entry.filmSlug}/${entry.episodeSlug}`,
-												)
-											}
-											onInfo={() =>
-												router.push(
-													`/info/${entry.filmSlug}`,
-												)
-											}
-										/>
-									))}
-								</div>
+					<h3 className='text-lg font-semibold text-white'>
+						Chưa có lịch sử xem phim
+					</h3>
+					<p className='text-sm text-gray-400'>
+						Xem phim để tạo lịch sử và dễ dàng tiếp tục từ nơi bạn
+						đã dừng.
+					</p>
+					<Button
+						variant='outline'
+						className='border-white/10 text-gray-300 hover:bg-white/10 cursor-pointer'
+						onClick={() => router.push("/")}
+					>
+						Khám phá phim mới
+					</Button>
+				</div>
+			:	<div className='space-y-8'>
+					{groupedHistory.map((group) => (
+						<div key={group.label} className='space-y-3'>
+							<h3 className='text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2'>
+								<Clock className='h-4 w-4' />
+								{group.label}
+							</h3>
+							<div className='space-y-2'>
+								{group.items.map((entry) => (
+									<WatchHistoryCard
+										key={entry.filmSlug}
+										entry={entry}
+										onContinue={() =>
+											router.push(
+												`/xem/${entry.filmSlug}/${entry.episodeSlug}`,
+											)
+										}
+										onInfo={() =>
+											router.push(
+												`/info/${entry.filmSlug}`,
+											)
+										}
+									/>
+								))}
 							</div>
-						))}
-					</div>
+						</div>
+					))}
+				</div>
 			}
-
-
 		</section>
 	);
 }
@@ -243,9 +231,7 @@ function WatchHistoryCard({
 	const film = entry.film;
 
 	return (
-		<div
-			className="group relative flex gap-4 p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 transition-all duration-200"
-		>
+		<div className='group relative flex gap-4 p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 transition-all duration-200'>
 			{/* Poster */}
 			<div
 				onClick={onInfo}
@@ -260,7 +246,7 @@ function WatchHistoryCard({
 						unoptimized
 						className='object-cover group-hover/poster:scale-105 transition-transform duration-300'
 					/>
-					: <div className='absolute inset-0 bg-neutral-800 flex items-center justify-center'>
+				:	<div className='absolute inset-0 bg-neutral-800 flex items-center justify-center'>
 						<Film className='h-8 w-8 text-white/20' />
 					</div>
 				}
