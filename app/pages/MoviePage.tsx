@@ -1,8 +1,7 @@
 "use client";
 
-import React, {useState, useEffect, useCallback, useRef} from "react";
+import React, {useState, useEffect, useCallback} from "react";
 import {useSearchParams} from "next/navigation";
-import {useRouter} from "next/navigation";
 import {
 	Film,
 	ChevronLeft,
@@ -20,7 +19,7 @@ import {Button} from "@/app/components/ui/button";
 import {Badge} from "@/app/components/ui/badge";
 import {Movie} from "@/app/types/movie";
 import {mapFilmToMovie, ApiMovieItem} from "@/app/utils/movieMapper";
-import {fetchMoviesPageData, type MovieItem} from "@/app/services";
+import {fetchMoviesPageData} from "@/app/services";
 
 // ────── Interfaces ──────
 
@@ -31,14 +30,6 @@ interface PaginationInfo {
 	totalPages: number;
 	hasNext: boolean;
 	hasPrev: boolean;
-}
-
-interface MoviePageData {
-	trendingMovies: ApiMovieItem[];
-	newestByYear: ApiMovieItem[];
-	recentlyUploaded: ApiMovieItem[];
-	allMovies: ApiMovieItem[];
-	pagination: PaginationInfo;
 }
 
 // Local TrendingCarousel removed. Imported from @/app/components/common/TrendingCarousel
@@ -201,7 +192,6 @@ function PaginationControls({
 // ────── Main Page ──────
 
 export default function MoviePage() {
-	const router = useRouter();
 	const searchParams = useSearchParams();
 	const initialPage = parseInt(searchParams.get("page") || "1");
 
@@ -289,7 +279,7 @@ export default function MoviePage() {
 
 	useEffect(() => {
 		fetchInitialData();
-	}, []);
+	}, [fetchInitialData]);
 
 	const handlePageChange = (page: number) => {
 		if (page < 1 || page > pagination.totalPages || isPaginating) return;

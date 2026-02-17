@@ -2,7 +2,6 @@
 
 import React, {useState, useEffect, useRef} from "react";
 import Image from "next/image";
-import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {Button} from "@/app/components/ui/button";
 import {Badge} from "@/app/components/ui/badge";
@@ -564,9 +563,13 @@ export default function HomePage() {
 									gradients[index % gradients.length];
 
 								return (
-									<Link
+									<button
 										key={`${genre}-${index}`}
-										href={`/the-loai/${genre.toLowerCase().replace(/\s/g, "-")}`}
+										onClick={() =>
+											router.push(
+												`/the-loai/${genre.toLowerCase().replace(/\s/g, "-")}`,
+											)
+										}
 										className={`
                                         relative flex items-center justify-center 
                                         min-w-[180px] h-[100px] 
@@ -575,6 +578,7 @@ export default function HomePage() {
                                         shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1
                                         transition-all duration-300 group
                                         overflow-hidden
+                                        cursor-pointer
                                     `}
 									>
 										<div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/30 to-transparent opacity-100' />
@@ -582,7 +586,7 @@ export default function HomePage() {
 										<span className='relative z-10 text-lg font-bold text-white drop-shadow-md text-center px-2'>
 											{genre}
 										</span>
-									</Link>
+									</button>
 								);
 							})}
 					</div>
@@ -597,10 +601,10 @@ export default function HomePage() {
 					{/* Mobile: single stacked column */}
 					<div className='flex flex-col lg:hidden'>
 						{categoryCards.map((card, i) => (
-							<Link
+							<div
 								key={card._id}
-								href={card.href}
-								className={`group relative block isolate overflow-hidden rounded-3xl h-[160px] border border-white/15 bg-black/20 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.35)] hover:!z-50 ${i > 0 ? "-mt-8" : ""}`}
+								onClick={() => router.push(card.href)}
+								className={`group relative block isolate overflow-hidden rounded-3xl h-[160px] border border-white/15 bg-black/20 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.35)] hover:!z-50 cursor-pointer ${i > 0 ? "-mt-8" : ""}`}
 								style={{zIndex: i + 1}}
 							>
 								{card.bgImage ?
@@ -637,10 +641,9 @@ export default function HomePage() {
 									</span>
 								</div>
 								<div className='absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500' />
-							</Link>
-						))}
+							</div>
+						))}{" "}
 					</div>
-
 					{/* Desktop: auto-scale columns based on card count */}
 					{(() => {
 						const isCompact = categoryCards.length <= 6;
@@ -660,10 +663,12 @@ export default function HomePage() {
 											className='flex-1 flex flex-col'
 										>
 											{colCards.map((card, i) => (
-												<Link
+												<div
 													key={card._id}
-													href={card.href}
-													className={`group relative block isolate overflow-hidden rounded-3xl ${cardHeight} border border-white/15 bg-black/20 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.35)] hover:!z-50 ${i > 0 ? "-mt-8" : ""}`}
+													onClick={() =>
+														router.push(card.href)
+													}
+													className={`group relative block isolate overflow-hidden rounded-3xl ${cardHeight} border border-white/15 bg-black/20 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.35)] hover:!z-50 cursor-pointer ${i > 0 ? "-mt-8" : ""}`}
 													style={{zIndex: i + 1}}
 												>
 													{card.bgImage ?
@@ -709,7 +714,7 @@ export default function HomePage() {
 														</span>
 													</div>
 													<div className='absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500' />
-												</Link>
+												</div>
 											))}
 										</div>
 									);

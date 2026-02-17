@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {useState, useEffect} from "react";
 import {
 	User,
 	Lock,
@@ -11,21 +11,20 @@ import {
 	Moon,
 	Sun,
 } from "lucide-react";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import {motion} from "framer-motion";
+import {useRouter} from "next/navigation";
 
-import { Button } from "@/app/components/ui/button";
-import { TextInput } from "@/app/components/ui/TextInput";
-import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
-import { useGlobalNotificationPopup } from "@/app/hooks/useGlobalNotificationPopup";
+import {Button} from "@/app/components/ui/button";
+import {TextInput} from "@/app/components/ui/TextInput";
+import {useAuth} from "@/app/hooks/useAuth";
+import {useTheme} from "@/app/hooks/useTheme";
+import {useGlobalNotificationPopup} from "@/app/hooks/useGlobalNotificationPopup";
 
 export default function SignInPage() {
 	const router = useRouter();
-	const { theme, toggleTheme } = useTheme();
-	const { login, isAuthenticated, loading } = useAuth();
-	const { showNotification } = useGlobalNotificationPopup();
+	const {theme, toggleTheme} = useTheme();
+	const {login, isAuthenticated, loading} = useAuth();
+	const {showNotification} = useGlobalNotificationPopup();
 
 	const [showPassword, setShowPassword] = useState(false);
 	const [identifier, setIdentifier] = useState("");
@@ -71,27 +70,27 @@ export default function SignInPage() {
 	return (
 		<div className='min-h-screen bg-white dark:bg-black text-black dark:text-white flex flex-col transition-colors duration-300'>
 			<header className='flex items-center justify-between px-4 sm:px-10 py-4 sm:py-6'>
-				<Link
-					href='/'
-					className='flex items-center gap-3 hover:opacity-80 transition-opacity'
+				<button
+					onClick={() => router.push("/")}
+					className='flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer'
 				>
 					<ArrowLeft className='w-5 h-5' />
-				</Link>
+				</button>
 				<Button
 					onClick={toggleTheme}
 					className='!p-3 !bg-transparent !border-0 hover:!bg-black/5 dark:hover:!bg-white/10 !shadow-none'
 				>
 					{theme === "dark" ?
 						<Sun className='w-5 h-5 text-black dark:text-white' />
-						: <Moon className='w-5 h-5 text-black dark:text-white' />}
+					:	<Moon className='w-5 h-5 text-black dark:text-white' />}
 				</Button>
 			</header>
 
 			<main className='flex-1 flex items-center justify-center px-4 sm:px-6'>
 				<motion.div
-					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ duration: 0.4 }}
+					initial={{opacity: 0, y: 20}}
+					animate={{opacity: 1, y: 0}}
+					transition={{duration: 0.4}}
 					className='w-full max-w-md'
 				>
 					<div className='w-full'>
@@ -136,7 +135,7 @@ export default function SignInPage() {
 									>
 										{showPassword ?
 											<EyeOff className='w-5 h-5' />
-											: <Eye className='w-5 h-5' />}
+										:	<Eye className='w-5 h-5' />}
 									</button>
 								}
 							/>
@@ -172,12 +171,14 @@ export default function SignInPage() {
 										Lưu đăng nhập
 									</span>
 								</label>
-								<Link
-									href='/forget-password'
-									className='text-sm text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors'
+								<button
+									onClick={() =>
+										router.push("/forget-password")
+									}
+									className='text-sm text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors cursor-pointer'
 								>
 									Quên mật khẩu?
-								</Link>
+								</button>
 							</div>
 
 							<Button
@@ -190,18 +191,18 @@ export default function SignInPage() {
 										<Loader2 className='w-5 h-5 mr-2 animate-spin' />
 										Đang đăng nhập...
 									</>
-									: "Đăng nhập"}
+								:	"Đăng nhập"}
 							</Button>
 						</form>
 
 						<p className='text-center mt-6 text-black/50 dark:text-white/50'>
 							Chưa có tài khoản?{" "}
-							<Link
-								href='/sign-up'
-								className='text-black dark:text-white font-medium hover:underline'
+							<button
+								onClick={() => router.push("/sign-up")}
+								className='text-black dark:text-white font-medium hover:underline cursor-pointer'
 							>
 								Đăng ký ngay
-							</Link>
+							</button>
 						</p>
 					</div>
 				</motion.div>
