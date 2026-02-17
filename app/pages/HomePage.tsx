@@ -210,7 +210,7 @@ export default function HomePage() {
 		<>
 			{/* Hero Section - only show if we have featured movies */}
 			{featuredMovie && (
-				<section className='relative overflow-hidden transition-all duration-500 ease-in-out h-[1000px] lg:h-[700px] flex items-center'>
+				<section className='relative overflow-hidden transition-all duration-500 ease-in-out lg:h-[700px] lg:flex lg:items-center'>
 					{/* Background */}
 					<div className='absolute inset-0 bg-neutral-950' />
 					<div className='absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(138,228,255,0.15),transparent)]' />
@@ -230,7 +230,134 @@ export default function HomePage() {
 						</div>
 					)}
 
-					<div className='relative w-full px-4 lg:px-32 py-8 lg:py-16'>
+					{/* === Mobile Layout === */}
+					<div className='relative w-full lg:hidden'>
+						{/* Mobile Poster with overlay info */}
+						<div
+							className='relative w-full aspect-[3/4] animate-in fade-in duration-700'
+							key={`mobile-poster-${featuredMovie.id}`}
+						>
+							{featuredMovie.backdrop || featuredMovie.poster ?
+								<Image
+									src={
+										featuredMovie.backdrop ||
+										featuredMovie.poster
+									}
+									alt={featuredMovie.title}
+									fill
+									sizes='100vw'
+									unoptimized
+									className='object-cover'
+								/>
+							:	<div className='absolute inset-0 bg-neutral-900/60 flex items-center justify-center'>
+									<Film className='h-16 w-16 text-white/20' />
+								</div>
+							}
+							{/* Gradient overlay from bottom */}
+							<div className='absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/60 to-transparent' />
+
+							{/* Info overlay at bottom of poster */}
+							<div
+								className='absolute bottom-0 left-0 right-0 px-5 pb-5 z-10 animate-in fade-in slide-in-from-bottom-3 duration-500'
+								key={`mobile-info-${featuredMovie.id}`}
+							>
+								<div className='flex items-center gap-2 mb-3 flex-wrap'>
+									<Badge className='bg-primary text-black text-[10px] font-bold border-0 px-2 py-0.5'>
+										<Flame className='h-2.5 w-2.5 mr-1' />
+										MỚI CẬP NHẬT
+									</Badge>
+									<Badge
+										variant='outline'
+										className='border-white/20 text-gray-300 text-[10px] px-2 py-0.5'
+									>
+										{featuredMovie.year}
+									</Badge>
+									{featuredMovie.rating > 0 && (
+										<Badge
+											variant='outline'
+											className='border-primary/30 text-primary text-[10px] px-2 py-0.5'
+										>
+											<Star className='h-2.5 w-2.5 mr-0.5 fill-primary' />
+											{featuredMovie.rating}
+										</Badge>
+									)}
+								</div>
+
+								<h1 className='text-2xl font-black text-white leading-tight mb-1'>
+									{featuredMovie.title}
+								</h1>
+
+								<p className='text-xs text-primary/70 font-medium tracking-wide mb-3'>
+									{featuredMovie.originalTitle}
+								</p>
+
+								<div className='flex items-center gap-3 text-xs text-gray-400 mb-3 flex-wrap'>
+									<span className='flex items-center gap-1'>
+										<Clock className='h-3 w-3' />
+										{featuredMovie.duration}
+									</span>
+									<span className='flex items-center gap-1'>
+										<Eye className='h-3 w-3' />
+										{featuredMovie.views} lượt xem
+									</span>
+									<span className='text-primary font-medium'>
+										{featuredMovie.episode}
+									</span>
+								</div>
+
+								<div className='flex flex-wrap gap-1.5 mb-3'>
+									{featuredMovie.genre
+										.slice(0, 4)
+										.map((g) => (
+											<Badge
+												key={g}
+												variant='outline'
+												className='border-white/10 text-gray-300 text-[10px] px-2 py-0.5'
+											>
+												{g}
+											</Badge>
+										))}
+								</div>
+
+								<p className='text-gray-400 leading-relaxed text-xs line-clamp-2 mb-4'>
+									{featuredMovie.description}
+								</p>
+
+								<Button
+									size='default'
+									onClick={() =>
+										router.push(`/info/${featuredMovie.id}`)
+									}
+									className='bg-primary hover:bg-primary/90 text-black rounded-full px-6 font-semibold shadow-lg shadow-primary/20 h-10 cursor-pointer w-full'
+								>
+									<Play
+										className='h-4 w-4 mr-2'
+										fill='black'
+									/>
+									Xem Ngay
+								</Button>
+							</div>
+						</div>
+
+						{/* Mobile Navigation Dots */}
+						<div className='flex items-center justify-center gap-2 py-4'>
+							{featuredMoviesData.map((_, index) => (
+								<button
+									key={index}
+									onClick={() => setCurrentSlide(index)}
+									className={`h-1.5 rounded-full transition-all duration-300 ${
+										currentSlide === index ?
+											"w-8 bg-primary"
+										:	"w-2 bg-white/20 hover:bg-white/40"
+									}`}
+									aria-label={`Go to slide ${index + 1}`}
+								/>
+							))}
+						</div>
+					</div>
+
+					{/* === Desktop Layout (unchanged) === */}
+					<div className='relative w-full px-4 lg:px-32 py-8 lg:py-16 hidden lg:block'>
 						<div className='grid lg:grid-cols-[1fr_auto] gap-8 lg:gap-12 items-center'>
 							{/* Hero Info Container */}
 							<div className='flex flex-col gap-6 max-w-2xl'>
@@ -261,7 +388,7 @@ export default function HomePage() {
 										)}
 									</div>
 
-									<h1 className='text-4xl lg:text-6xl font-black text-white leading-tight'>
+									<h1 className='text-6xl font-black text-white leading-tight'>
 										{featuredMovie.title}
 									</h1>
 
@@ -295,7 +422,7 @@ export default function HomePage() {
 										))}
 									</div>
 
-									<p className='text-gray-400 leading-relaxed text-sm lg:text-base line-clamp-3'>
+									<p className='text-gray-400 leading-relaxed text-base line-clamp-3'>
 										{featuredMovie.description}
 									</p>
 
@@ -321,7 +448,7 @@ export default function HomePage() {
 
 							{/* Hero Poster */}
 							<div
-								className='hidden lg:block relative animate-in fade-in duration-1000'
+								className='relative animate-in fade-in duration-1000'
 								key={`poster-${featuredMovie.id}`}
 							>
 								<div className='absolute -inset-4 bg-primary/20 rounded-2xl blur-2xl' />
@@ -353,8 +480,8 @@ export default function HomePage() {
 							</div>
 						</div>
 					</div>
-					{/* Navigation Dots - Centered Bottom */}
-					<div className='absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20'>
+					{/* Navigation Dots - Desktop Only */}
+					<div className='absolute bottom-6 left-1/2 -translate-x-1/2 hidden lg:flex items-center gap-2 z-20'>
 						{featuredMoviesData.map((_, index) => (
 							<button
 								key={index}
