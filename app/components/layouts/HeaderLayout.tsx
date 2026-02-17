@@ -1,7 +1,6 @@
 "use client";
 
 import React, {useState, useEffect} from "react";
-import Link from "next/link";
 import Image from "next/image";
 import {useRouter} from "next/navigation";
 import {icon} from "@/app/assets";
@@ -32,47 +31,11 @@ import {
 	Film,
 	Tv,
 	Users,
-	Calendar,
 	Flame,
 	LayoutDashboard,
 } from "lucide-react";
 import api from "@/app/utils/axios";
 import {useAuth} from "@/app/hooks/useAuth";
-
-// --- Data ---
-const DEFAULT_GENRES = [
-	"Hành Động",
-	"Tình Cảm",
-	"Hài Hước",
-	"Kinh Dị",
-	"Viễn Tưởng",
-	"Tâm Lý",
-	"Phiêu Lưu",
-	"Hoạt Hình",
-	"Võ Thuật",
-	"Cổ Trang",
-	"Chiến Tranh",
-	"Âm Nhạc",
-	"Thể Thao",
-	"Bí Ẩn",
-	"Gia Đình",
-	"Hình Sự",
-];
-
-const countries = [
-	"Trung Quốc",
-	"Hàn Quốc",
-	"Nhật Bản",
-	"Thái Lan",
-	"Âu Mỹ",
-	"Đài Loan",
-	"Hồng Kông",
-	"Ấn Độ",
-	"Anh",
-	"Pháp",
-	"Đức",
-	"Việt Nam",
-];
 
 // --- Sub Components ---
 
@@ -80,9 +43,16 @@ interface NavDropdownProps {
 	label: string;
 	items: string[];
 	icon?: React.ReactNode;
+	basePath?: string;
 }
 
-function NavDropdown({label, items, icon}: NavDropdownProps) {
+function NavDropdown({
+	label,
+	items,
+	icon,
+	basePath = "/the-loai",
+}: NavDropdownProps) {
+	const router = useRouter();
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
@@ -101,13 +71,13 @@ function NavDropdown({label, items, icon}: NavDropdownProps) {
 						<DropdownMenuItem
 							key={item}
 							className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer px-3 py-2'
+							onClick={() =>
+								router.push(
+									`${basePath}/${item.toLowerCase().replace(/\s/g, "-")}`,
+								)
+							}
 						>
-							<Link
-								href={`/the-loai/${item.toLowerCase().replace(/\s/g, "-")}`}
-								className='w-full'
-							>
-								{item}
-							</Link>
+							{item}
 						</DropdownMenuItem>
 					))}
 				</div>
@@ -124,9 +94,10 @@ interface NavLinkProps {
 }
 
 function NavLink({href, label, icon, badge}: NavLinkProps) {
+	const router = useRouter();
 	return (
-		<Link
-			href={href}
+		<button
+			onClick={() => router.push(href)}
 			className='flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-md hover:bg-white/5'
 		>
 			{icon}
@@ -136,7 +107,7 @@ function NavLink({href, label, icon, badge}: NavLinkProps) {
 					{badge}
 				</Badge>
 			)}
-		</Link>
+		</button>
 	);
 }
 
@@ -145,17 +116,17 @@ function NavLink({href, label, icon, badge}: NavLinkProps) {
 export default function HeaderLayout({children}: {children: React.ReactNode}) {
 	const router = useRouter();
 	const [searchQuery, setSearchQuery] = useState("");
-	const [genres, setGenres] = useState<string[]>(DEFAULT_GENRES);
+	const [genres, setGenres] = useState<string[]>([]);
+	const [countries, setCountries] = useState<string[]>([]);
 	const {isAuthenticated, user, logout} = useAuth();
 
-	// Handle search
+	// Handle search (mobile)
 	const handleSearch = () => {
 		if (searchQuery.trim()) {
 			router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
 		}
 	};
 
-	// Handle search on Enter key
 	const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === "Enter") {
 			e.preventDefault();
@@ -164,21 +135,35 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 	};
 
 	useEffect(() => {
-		const fetchGenres = async () => {
+		const fetchData = async () => {
 			try {
-				const response = await api.get("/genres");
+				// Fetch genres
+				const genresResponse = await api.get("/genres");
 				if (
-					response.data &&
-					Array.isArray(response.data) &&
-					response.data.length > 0
+					genresResponse.data &&
+					Array.isArray(genresResponse.data) &&
+					genresResponse.data.length > 0
 				) {
-					setGenres(response.data.filter(Boolean));
+					setGenres(genresResponse.data.filter(Boolean));
+				}
+
+				// Fetch countries
+				const countriesResponse = await api.get("/countries");
+				if (
+					countriesResponse.data &&
+					Array.isArray(countriesResponse.data) &&
+					countriesResponse.data.length > 0
+				) {
+					setCountries(countriesResponse.data.filter(Boolean));
 				}
 			} catch (error) {
-				console.error("Failed to fetch genres list", error);
+				console.error(
+					"Failed to fetch genres or countries list",
+					error,
+				);
 			}
 		};
-		fetchGenres();
+		fetchData();
 	}, []);
 
 	return (
@@ -189,9 +174,9 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 					<div className='flex items-center justify-between h-16 gap-4'>
 						<div className='flex items-center gap-6 flex-1'>
 							{/* Logo */}
-							<Link
-								href='/'
-								className='flex items-center gap-2 shrink-0 group'
+							<button
+								onClick={() => router.push("/")}
+								className='flex items-center gap-2 shrink-0 group cursor-pointer'
 							>
 								<div className='relative'>
 									<div className='absolute -inset-1 rounded-lg blur opacity-40 group-hover:opacity-70 transition-opacity' />
@@ -206,7 +191,7 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 								<span className='text-3xl font-alfa text-white mt-1.5'>
 									RapPhim
 								</span>
-							</Link>
+							</button>
 
 							{/* Desktop Nav */}
 							<nav className='hidden xl:flex items-center gap-1'>
@@ -221,6 +206,7 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 								<NavDropdown
 									label='Quốc Gia'
 									items={countries}
+									basePath='/quoc-gia'
 								/>
 							</nav>
 
@@ -257,9 +243,9 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 													width={36}
 													height={36}
 													unoptimized
-													className='h-9 w-9 rounded-full border border-white/10 object-cover shadow-lg shadow-primary/20'
+													className='h-9 w-9 rounded-full border border-white/10 object-cover shadow-lg shadow-primary/20 cursor-pointer'
 												/>
-											:	<span className='flex h-9 w-9 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20'>
+											:	<span className='flex h-9 w-9 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20 cursor-pointer'>
 													<User className='h-4 w-4' />
 												</span>
 											}
@@ -269,42 +255,42 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 										align='end'
 										className='w-44 bg-[#1a1a2e]/95 backdrop-blur-xl border-white/10'
 									>
-										<DropdownMenuItem className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer'>
-											<Link
-												href='/profile'
-												className='w-full flex items-center gap-2'
-											>
-												<User className='h-4 w-4' />
-												Hồ sơ
-											</Link>
+										<DropdownMenuItem
+											className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer'
+											onClick={() =>
+												router.push("/profile")
+											}
+										>
+											<User className='h-4 w-4 mr-2' />
+											Hồ sơ
 										</DropdownMenuItem>
-										<DropdownMenuItem className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer'>
-											<Link
-												href='/saved'
-												className='w-full flex items-center gap-2'
-											>
-												<Bookmark className='h-4 w-4' />
-												Phim đã lưu
-											</Link>
+										<DropdownMenuItem
+											className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer'
+											onClick={() =>
+												router.push("/saved")
+											}
+										>
+											<Bookmark className='h-4 w-4 mr-2' />
+											Phim đã lưu
 										</DropdownMenuItem>
-										<DropdownMenuItem className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer'>
-											<Link
-												href='/history'
-												className='w-full flex items-center gap-2'
-											>
-												<History className='h-4 w-4' />
-												Lịch sử xem
-											</Link>
+										<DropdownMenuItem
+											className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer'
+											onClick={() =>
+												router.push("/history")
+											}
+										>
+											<History className='h-4 w-4 mr-2' />
+											Lịch sử xem
 										</DropdownMenuItem>
 										{user?.role === "admin" && (
-											<DropdownMenuItem className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer'>
-												<Link
-													href='/admin'
-													className='w-full flex items-center gap-2'
-												>
-													<LayoutDashboard className='h-4 w-4' />
-													Trang quản lý
-												</Link>
+											<DropdownMenuItem
+												className='text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-md cursor-pointer'
+												onClick={() =>
+													router.push("/admin")
+												}
+											>
+												<LayoutDashboard className='h-4 w-4 mr-2' />
+												Trang quản lý
 											</DropdownMenuItem>
 										)}
 										<DropdownMenuItem
@@ -314,19 +300,18 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 												logout();
 											}}
 										>
-											<span className='flex items-center gap-2'>
-												<LogOut className='h-4 w-4' />
-												Đăng xuất
-											</span>
+											<LogOut className='h-4 w-4 mr-2' />
+											Đăng xuất
 										</DropdownMenuItem>
 									</DropdownMenuContent>
 								</DropdownMenu>
-							:	<Link href='/sign-in'>
-									<Button className='hidden sm:flex items-center gap-2 bg-primary hover:bg-primary/90 text-black rounded-full px-5 font-bold shadow-lg shadow-primary/20 h-9 transition-all duration-300'>
-										<User className='h-4 w-4' />
-										Đăng Nhập
-									</Button>
-								</Link>
+							:	<Button
+									onClick={() => router.push("/sign-in")}
+									className='hidden sm:flex items-center gap-2 bg-primary hover:bg-primary/90 text-black rounded-full px-5 font-bold shadow-lg shadow-primary/20 h-9 transition-all duration-300 cursor-pointer'
+								>
+									<User className='h-4 w-4' />
+									Đăng Nhập
+								</Button>
 							}
 
 							{/* Mobile menu */}
@@ -425,46 +410,27 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 													items={countries}
 												/>
 												<MobileNavLink
-													href='/dien-vien'
-													label='Diễn Viên'
+													href='/saved'
+													label='Phim đã lưu'
 													icon={
-														<Users className='h-4 w-4' />
+														<Bookmark className='h-4 w-4' />
 													}
 												/>
 												<MobileNavLink
-													href='/lich-chieu'
-													label='Lịch Chiếu'
+													href='/history'
+													label='Lịch sử xem'
 													icon={
-														<Calendar className='h-4 w-4' />
+														<History className='h-4 w-4' />
 													}
 												/>
-												{isAuthenticated && (
-													<>
-														<MobileNavLink
-															href='/saved'
-															label='Phim đã lưu'
-															icon={
-																<Bookmark className='h-4 w-4' />
-															}
-														/>
-														<MobileNavLink
-															href='/history'
-															label='Lịch sử xem'
-															icon={
-																<History className='h-4 w-4' />
-															}
-														/>
-														{user?.role ===
-															"admin" && (
-															<MobileNavLink
-																href='/admin'
-																label='Trang quản lý'
-																icon={
-																	<LayoutDashboard className='h-4 w-4' />
-																}
-															/>
-														)}
-													</>
+												{user?.role === "admin" && (
+													<MobileNavLink
+														href='/admin'
+														label='Trang quản lý'
+														icon={
+															<LayoutDashboard className='h-4 w-4' />
+														}
+													/>
 												)}
 											</div>
 										</div>
@@ -472,9 +438,11 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 										{/* Mobile Footer */}
 										<div className='p-4 border-t border-white/5'>
 											{isAuthenticated && user?.avatar ?
-												<Link
-													href='/profile'
-													className='flex items-center gap-3'
+												<button
+													onClick={() =>
+														router.push("/profile")
+													}
+													className='flex items-center gap-3 w-full'
 												>
 													<Image
 														src={user.avatar}
@@ -496,10 +464,12 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 															Xem hồ sơ
 														</p>
 													</div>
-												</Link>
+												</button>
 											: isAuthenticated ?
-												<Link
-													href='/profile'
+												<button
+													onClick={() =>
+														router.push("/profile")
+													}
 													className='flex items-center gap-3'
 												>
 													<span className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20'>
@@ -514,16 +484,16 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 															Xem hồ sơ
 														</p>
 													</div>
-												</Link>
-											:	<Link
-													href='/sign-in'
-													className='block'
+												</button>
+											:	<Button
+													onClick={() =>
+														router.push("/sign-in")
+													}
+													className='w-full bg-primary hover:bg-primary/90 text-black rounded-full font-bold shadow-lg shadow-primary/20'
 												>
-													<Button className='w-full bg-primary hover:bg-primary/90 text-black rounded-full font-bold shadow-lg shadow-primary/20'>
-														<User className='h-4 w-4 mr-2' />
-														Đăng nhập / Đăng ký
-													</Button>
-												</Link>
+													<User className='h-4 w-4 mr-2' />
+													Đăng nhập / Đăng ký
+												</Button>
 											}
 										</div>
 									</div>
@@ -553,10 +523,11 @@ function MobileNavLink({
 	icon: React.ReactNode;
 	badge?: string;
 }) {
+	const router = useRouter();
 	return (
-		<Link
-			href={href}
-			className='flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors'
+		<button
+			onClick={() => router.push(href)}
+			className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors'
 		>
 			{icon}
 			{label}
@@ -565,12 +536,24 @@ function MobileNavLink({
 					{badge}
 				</Badge>
 			)}
-		</Link>
+		</button>
 	);
 }
 
-function MobileNavSection({title, items}: {title: string; items: string[]}) {
+function MobileNavSection({
+	title,
+	items,
+	basePath,
+}: {
+	title: string;
+	items: string[];
+	basePath?: string;
+}) {
+	const router = useRouter();
 	const [isOpen, setIsOpen] = useState(false);
+
+	const resolvedBasePath =
+		basePath || (title === "Quốc Gia" ? "/quoc-gia" : "/the-loai");
 
 	return (
 		<div>
@@ -589,13 +572,17 @@ function MobileNavSection({title, items}: {title: string; items: string[]}) {
 			{isOpen && (
 				<div className='ml-6 mt-1 space-y-0.5 animate-in slide-in-from-top-2 duration-200'>
 					{items.map((item) => (
-						<Link
+						<button
 							key={item}
-							href={`/${title.toLowerCase().replace(/\s/g, "-")}/${item.toLowerCase().replace(/\s/g, "-")}`}
-							className='block px-3 py-1.5 text-sm text-gray-500 hover:text-gray-300 rounded transition-colors'
+							onClick={() =>
+								router.push(
+									`${resolvedBasePath}/${item.toLowerCase().replace(/\s/g, "-")}`,
+								)
+							}
+							className='block w-full text-left px-3 py-1.5 text-sm text-gray-500 hover:text-gray-300 rounded transition-colors'
 						>
 							{item}
-						</Link>
+						</button>
 					))}
 				</div>
 			)}

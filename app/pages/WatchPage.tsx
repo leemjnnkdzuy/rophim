@@ -15,12 +15,8 @@ import {
 	Film,
 	Loader2,
 	AlertCircle,
-	MessageCircle,
 	Share2,
-	Heart,
 	Bookmark,
-	Home,
-	Info,
 	ChevronDown,
 	ChevronUp,
 	Server,
@@ -33,7 +29,6 @@ import {
 	EpisodeItem,
 	incrementView,
 } from "@/app/services/movieService";
-import api from "@/app/utils/axios";
 import {useAuth} from "@/app/hooks/useAuth";
 import {useGlobalNotificationPopup} from "@/app/hooks/useGlobalNotificationPopup";
 import {usePageMetadata} from "@/app/hooks/usePageMetadata";
@@ -599,75 +594,6 @@ export default function WatchPage({
 										value={`${film.current_episode || "?"} / ${film.total_episodes || "?"}`}
 									/>
 								</div>
-							</div>
-						</div>
-
-						{/* Cast */}
-						{film.casts && (
-							<div className='bg-white/[0.03] rounded-2xl border border-white/5 p-4 space-y-3'>
-								<h4 className='text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2'>
-									<Star className='h-3.5 w-3.5 text-primary' />
-									Diễn viên
-								</h4>
-								<div className='flex flex-wrap gap-1.5'>
-									{film.casts
-										.split(",")
-										.slice(0, 8)
-										.map((cast, i) => (
-											<span
-												key={i}
-												className='text-[11px] text-gray-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/5'
-											>
-												{cast.trim()}
-											</span>
-										))}
-								</div>
-							</div>
-						)}
-
-						{/* Quick Actions */}
-						<div className='bg-white/[0.03] rounded-2xl border border-white/5 p-4 space-y-3'>
-							<h4 className='text-sm font-bold text-white uppercase tracking-wider'>
-								Hành động
-							</h4>
-							<div className='grid grid-cols-2 gap-2'>
-								<Button
-									variant='outline'
-									size='sm'
-									onClick={() =>
-										router.push(`/info/${film.slug}`)
-									}
-									className='border-white/10 text-gray-300 hover:bg-white/10 hover:text-white rounded-lg h-10 cursor-pointer transition-all w-full text-xs'
-								>
-									<Info className='h-3.5 w-3.5 mr-1.5' />
-									Chi tiết phim
-								</Button>
-								<Button
-									variant='outline'
-									size='sm'
-									onClick={() => router.push("/")}
-									className='border-white/10 text-gray-300 hover:bg-white/10 hover:text-white rounded-lg h-10 cursor-pointer transition-all w-full text-xs'
-								>
-									<Home className='h-3.5 w-3.5 mr-1.5' />
-									Trang chủ
-								</Button>
-								<Button
-									variant='outline'
-									size='sm'
-									onClick={handleToggleSave}
-									className='border-white/10 text-gray-300 hover:bg-white/10 hover:text-white rounded-lg h-10 cursor-pointer transition-all w-full text-xs'
-								>
-									<Bookmark className='h-3.5 w-3.5 mr-1.5' />
-									{isSaved ? "Đã lưu" : "Lưu phim"}
-								</Button>
-								<Button
-									variant='outline'
-									size='sm'
-									className='border-white/10 text-gray-300 hover:bg-white/10 hover:text-white rounded-lg h-10 cursor-pointer transition-all w-full text-xs'
-								>
-									<MessageCircle className='h-3.5 w-3.5 mr-1.5' />
-									Bình luận
-								</Button>
 							</div>
 						</div>
 					</div>
