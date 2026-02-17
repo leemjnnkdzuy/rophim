@@ -19,28 +19,19 @@ import {Switch} from "@/app/components/ui/switch";
 import {useAuth} from "@/app/hooks/useAuth";
 import {MovieCard} from "@/app/components/common/MovieCard";
 import {AvatarCropDialog} from "@/app/components/common/AvatarCropDialog";
-import {mapFilmToMovie, ApiMovieItem} from "@/app/utils/movieMapper";
+import {mapFilmToMovie} from "@/app/utils/movieMapper";
 import {
 	getUserProfile,
 	getUserProfileByUsername,
 	updateUserProfileVisibility,
 	updateUserAvatar,
+	UserProfile,
 } from "@/app/services/UserService";
-
-interface ProfileData {
-	username: string;
-	avatar: string;
-	savedFilms: ApiMovieItem[];
-	savedCount: number;
-	showSavedFilms: boolean;
-	isOwnProfile: boolean;
-	createdAt: string;
-}
 
 export default function ProfilePage({identifier}: {identifier?: string}) {
 	const router = useRouter();
 	const {user: authUser} = useAuth();
-	const [profile, setProfile] = useState<ProfileData | null>(null);
+	const [profile, setProfile] = useState<UserProfile | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
 	const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
@@ -57,7 +48,7 @@ export default function ProfilePage({identifier}: {identifier?: string}) {
 				profileData = await getUserProfile();
 			}
 			if (profileData) {
-				setProfile(profileData as unknown as ProfileData);
+				setProfile(profileData);
 			}
 		} catch (err) {
 			console.error("Failed to fetch profile:", err);

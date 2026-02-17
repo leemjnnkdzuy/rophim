@@ -15,25 +15,15 @@ import {
 	DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import {
-	Sheet,
-	SheetContent,
-	SheetTrigger,
-	SheetTitle,
-} from "@/app/components/ui/sheet";
-import {
 	Search,
 	ChevronDown,
-	Menu,
 	User,
 	Bookmark,
 	History,
 	LogOut,
-	Film,
-	Tv,
-	Users,
-	Flame,
 	LayoutDashboard,
 } from "lucide-react";
+import Sidebar from "@/app/components/common/Sidebar";
 import api from "@/app/utils/axios";
 import {useAuth} from "@/app/hooks/useAuth";
 
@@ -315,190 +305,16 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 							}
 
 							{/* Mobile menu */}
-							<Sheet>
-								<SheetTrigger asChild>
-									<Button
-										variant='ghost'
-										size='icon'
-										className='lg:hidden text-gray-400 hover:text-white hover:bg-white/10 rounded-full'
-									>
-										<Menu className='h-5 w-5' />
-									</Button>
-								</SheetTrigger>
-								<SheetContent
-									side='right'
-									className='w-80 bg-[#0d0d1a] border-white/10 p-0'
-								>
-									<SheetTitle className='sr-only'>
-										Menu điều hướng
-									</SheetTitle>
-									<div className='flex flex-col h-full'>
-										{/* Mobile Header */}
-										<div className='p-5 border-b border-white/5'>
-											<div className='flex items-center gap-2'>
-												<Image
-													src={icon}
-													alt='RapPhim Logo'
-													width={32}
-													height={32}
-													className='rounded-lg'
-												/>
-												<span className='text-lg font-bold text-white'>
-													RapPhim
-												</span>
-											</div>
-										</div>
-
-										{/* Mobile Search */}
-										<div className='p-4'>
-											<div className='relative'>
-												<Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500' />
-												<Input
-													value={searchQuery}
-													onChange={(e) =>
-														setSearchQuery(
-															e.target.value,
-														)
-													}
-													onKeyDown={
-														handleSearchKeyDown
-													}
-													placeholder='Tìm kiếm phim...'
-													className='pl-9 bg-white/5 border-white/10 rounded-full text-sm'
-												/>
-											</div>
-										</div>
-
-										{/* Mobile Nav Items */}
-										<div className='flex-1 overflow-y-auto px-3 pb-4'>
-											<div className='space-y-1'>
-												<MobileNavLink
-													href='/'
-													label='Trang Chủ'
-													icon={
-														<Flame className='h-4 w-4' />
-													}
-												/>
-												<MobileNavSection
-													title='Thể Loại'
-													items={genres}
-												/>
-												<MobileNavLink
-													href='/movie'
-													label='Phim Lẻ'
-													icon={
-														<Film className='h-4 w-4' />
-													}
-												/>
-												<MobileNavLink
-													href='/series'
-													label='Phim Bộ'
-													icon={
-														<Tv className='h-4 w-4' />
-													}
-												/>
-												<MobileNavLink
-													href='/xem-chung'
-													label='Xem Chung'
-													icon={
-														<Users className='h-4 w-4' />
-													}
-													badge='NEW'
-												/>
-												<MobileNavSection
-													title='Quốc Gia'
-													items={countries}
-												/>
-												<MobileNavLink
-													href='/saved'
-													label='Phim đã lưu'
-													icon={
-														<Bookmark className='h-4 w-4' />
-													}
-												/>
-												<MobileNavLink
-													href='/history'
-													label='Lịch sử xem'
-													icon={
-														<History className='h-4 w-4' />
-													}
-												/>
-												{user?.role === "admin" && (
-													<MobileNavLink
-														href='/admin'
-														label='Trang quản lý'
-														icon={
-															<LayoutDashboard className='h-4 w-4' />
-														}
-													/>
-												)}
-											</div>
-										</div>
-
-										{/* Mobile Footer */}
-										<div className='p-4 border-t border-white/5'>
-											{isAuthenticated && user?.avatar ?
-												<button
-													onClick={() =>
-														router.push("/profile")
-													}
-													className='flex items-center gap-3 w-full'
-												>
-													<Image
-														src={user.avatar}
-														alt={
-															user?.username ||
-															"User"
-														}
-														width={40}
-														height={40}
-														unoptimized
-														className='h-10 w-10 rounded-full border border-white/10 object-cover shadow-lg shadow-primary/20'
-													/>
-													<div className='min-w-0'>
-														<p className='text-sm font-semibold text-white truncate'>
-															{user?.username ||
-																"Tài khoản"}
-														</p>
-														<p className='text-xs text-gray-400 truncate'>
-															Xem hồ sơ
-														</p>
-													</div>
-												</button>
-											: isAuthenticated ?
-												<button
-													onClick={() =>
-														router.push("/profile")
-													}
-													className='flex items-center gap-3'
-												>
-													<span className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/20'>
-														<User className='h-4 w-4' />
-													</span>
-													<div className='min-w-0'>
-														<p className='text-sm font-semibold text-white truncate'>
-															{user?.username ||
-																"Tài khoản"}
-														</p>
-														<p className='text-xs text-gray-400 truncate'>
-															Xem hồ sơ
-														</p>
-													</div>
-												</button>
-											:	<Button
-													onClick={() =>
-														router.push("/sign-in")
-													}
-													className='w-full bg-primary hover:bg-primary/90 text-black rounded-full font-bold shadow-lg shadow-primary/20'
-												>
-													<User className='h-4 w-4 mr-2' />
-													Đăng nhập / Đăng ký
-												</Button>
-											}
-										</div>
-									</div>
-								</SheetContent>
-							</Sheet>
+							<Sidebar
+								genres={genres}
+								countries={countries}
+								searchQuery={searchQuery}
+								setSearchQuery={setSearchQuery}
+								handleSearchKeyDown={handleSearchKeyDown}
+								isAuthenticated={isAuthenticated}
+								user={user}
+								logout={logout}
+							/>
 						</div>
 					</div>
 				</div>
@@ -506,86 +322,6 @@ export default function HeaderLayout({children}: {children: React.ReactNode}) {
 
 			{/* Main Content */}
 			<main>{children}</main>
-		</div>
-	);
-}
-
-// --- Mobile Nav Components ---
-
-function MobileNavLink({
-	href,
-	label,
-	icon,
-	badge,
-}: {
-	href: string;
-	label: string;
-	icon: React.ReactNode;
-	badge?: string;
-}) {
-	const router = useRouter();
-	return (
-		<button
-			onClick={() => router.push(href)}
-			className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors'
-		>
-			{icon}
-			{label}
-			{badge && (
-				<Badge className='bg-[#8ae4ff] text-black text-[10px] px-1.5 py-0 border-0 font-bold'>
-					{badge}
-				</Badge>
-			)}
-		</button>
-	);
-}
-
-function MobileNavSection({
-	title,
-	items,
-	basePath,
-}: {
-	title: string;
-	items: string[];
-	basePath?: string;
-}) {
-	const router = useRouter();
-	const [isOpen, setIsOpen] = useState(false);
-
-	const resolvedBasePath =
-		basePath || (title === "Quốc Gia" ? "/quoc-gia" : "/the-loai");
-
-	return (
-		<div>
-			<button
-				onClick={() => setIsOpen(!isOpen)}
-				className='flex items-center justify-between w-full px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors'
-			>
-				<span className='flex items-center gap-3'>
-					<Film className='h-4 w-4' />
-					{title}
-				</span>
-				<ChevronDown
-					className={`h-4 w-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-				/>
-			</button>
-			{isOpen && (
-				<div className='ml-6 mt-1 space-y-0.5 animate-in slide-in-from-top-2 duration-200'>
-					{items.map((item) => (
-						<button
-							key={item}
-							onClick={() =>
-								router.push(
-									`${resolvedBasePath}/${item.toLowerCase().replace(/\s/g, "-")}`,
-								)
-							}
-							className='block w-full text-left px-3 py-1.5 text-sm text-gray-500 hover:text-gray-300 rounded transition-colors'
-						>
-							{item}
-						</button>
-					))}
-				</div>
-			)}
 		</div>
 	);
 }

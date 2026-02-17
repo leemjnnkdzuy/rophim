@@ -1,4 +1,5 @@
 import api from "@/app/utils/axios";
+import {ApiMovieItem} from "@/app/utils/movieMapper";
 
 /**
  * User-related API interactions
@@ -39,12 +40,13 @@ export interface HistoryEntry {
 }
 
 export interface UserProfile {
-	_id: string;
-	email: string;
 	username: string;
-	avatar?: string;
+	avatar: string;
+	savedFilms: ApiMovieItem[];
+	savedCount: number;
+	showSavedFilms: boolean;
+	isOwnProfile: boolean;
 	createdAt: string;
-	updatedAt: string;
 }
 
 export interface UserFilmData {
@@ -187,7 +189,7 @@ export const getUserFilmRating = async (
 export const getUserProfile = async (): Promise<UserProfile | null> => {
 	try {
 		const response = await api.get("/user/profile");
-		return response.data?.user || null;
+		return response.data?.profile || null;
 	} catch (error) {
 		console.error("Failed to fetch user profile:", error);
 		return null;
@@ -202,7 +204,7 @@ export const getUserProfileByUsername = async (
 ): Promise<UserProfile | null> => {
 	try {
 		const response = await api.get("/user/profile", {params: {username}});
-		return response.data?.user || null;
+		return response.data?.profile || null;
 	} catch (error) {
 		console.error("Failed to fetch user profile:", error);
 		return null;
